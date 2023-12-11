@@ -20,10 +20,10 @@ export class ZipEntry {
  */
 class Zipper {
   /**
-   * @readonly
+   * @type {TextEncoder}
    * @memberof Zipper
    */
-  static #textEnc = new TextEncoder();
+  #textEnc = new TextEncoder();
 
   /**
    * @type {ZipEntry[]}
@@ -95,7 +95,7 @@ class Zipper {
         ...this.#encodeNumber(entry.size),        // Uncompressed size (or 0xffffffff for ZIP64)
         ...this.#encodeNumber(entry.name.length, 2), // File name length
         0x00, 0x00,                               // Extra field length
-        ...Zipper.#textEnc.encode(entry.name),      // File name
+        ...this.#textEnc.encode(entry.name),      // File name
                                                   // Extra field (omitted)
     ])
   }
@@ -126,7 +126,7 @@ class Zipper {
         0x00, 0x00,                               // Internal file attributes
         0x00, 0x00, 0x00, 0x00,                   // External file attributes
         0x00, 0x00, 0x00, 0x00,                   // Relative offset of local file header (or 0xffffffff for ZIP64). This is the number of bytes between the start of the first disk on which the file occurs, and the start of the local file header. This allows software reading the central directory to locate the position of the file inside the ZIP file.
-        ...Zipper.#textEnc.encode(entry.name),                            // File name
+        ...this.#textEnc.encode(entry.name),                            // File name
         ...[],                                    // Extra field
         ...[],                                    // File comment
     ])

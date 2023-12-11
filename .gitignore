@@ -131,3 +131,7 @@ dist
 
 # generated zip files
 *.zip
+
+# generated .d.ts files
+*.d.ts
+*.d.ts.map
