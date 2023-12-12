@@ -181,7 +181,7 @@ class Zipper {
       // Disk where central directory starts (or 0xffff for ZIP64) = 0
       0x00, 0x00,
       // Number of central directory records on this disk (or 0xffff for ZIP64)
-      ...this.#encodeNumber(1, 2),
+      ...this.#encodeNumber(this.#queue.length, 2),
       // Total number of central directory records (or 0xffff for ZIP64)
       ...this.#encodeNumber(this.#queue.length, 2),
       // Size of central directory (bytes) (or 0xffffffff for ZIP64) = TODO
