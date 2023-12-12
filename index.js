@@ -86,7 +86,7 @@ class Zipper {
     // prettier-ignore
     return new Uint8Array([
         0x50, 0x4b, 0x03, 0x04,                   // Local file header signature = 0x04034b50 (PK♥♦ or "PK\3\4")
-        0x0A, 0x00,                               // Version needed to extract (minimum)
+        0x14, 0x00,                               // Version needed to extract (minimum) = 0x14 -> 2.0
         0x00, 0x00,                               // General purpose bit flag
         0x00, 0x00,                               // Compression method; e.g. none = 0, DEFLATE = 8 (or "\0x08\0x00")
         ...this.#encodeNumber(this.#dateToDOSTime(entry.lastModified)),                              // File last modification time and date
@@ -111,8 +111,8 @@ class Zipper {
     // prettier-ignore
     return new Uint8Array([
         0x50, 0x4b, 0x01, 0x02,                   // Central directory file header signature = 0x02014b50 ("PK\1\2")
-        0x03, 0x00,                               // Version made by = 3 - UNIX
-        0x0A, 0x00,                               // Version needed to extract (minimum) = 1.0 (change to 4.5 for ZIP64)
+        0x2d, 0xFF,                               // Version made by = 0x2d -> 4.5, 0xFF -> Unknown
+        0x14, 0x00,                               // Version needed to extract (minimum) = 0x14 -> 2.0 (change to 4.5 for ZIP64)
         0x00, 0x00,                               // General purpose bit flag = Bit 11 set -> Use UTF-8 Filenames
         0x00, 0x00,                               // Compression method; e.g. none = 0, DEFLATE = 8 (or "\0x08\0x00")
         ...this.#encodeNumber(this.#dateToDOSTime(entry.lastModified)),                   // File last modification time and date = ignore for now [TODO] (MS-DOS time format)
