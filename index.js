@@ -83,20 +83,31 @@ class Zipper {
    * @memberof Zipper
    */
   #generateLocalFileHeader(entry) {
-    // prettier-ignore
     return new Uint8Array([
-        0x50, 0x4b, 0x03, 0x04,                   // Local file header signature = 0x04034b50 (PK♥♦ or "PK\3\4")
-        0x14, 0x00,                               // Version needed to extract (minimum) = 0x14 -> 2.0
-        0x00, 0x00,                               // General purpose bit flag
-        0x00, 0x00,                               // Compression method; e.g. none = 0, DEFLATE = 8 (or "\0x08\0x00")
-        ...this.#encodeNumber(this.#dateToDOSTime(entry.lastModified)),                              // File last modification time and date
-        ...this.#encodeNumber(crc32(entry.data)),                   // CRC-32 of uncompressed data
-        ...this.#encodeNumber(entry.size),        // Compressed size (or 0xffffffff for ZIP64)
-        ...this.#encodeNumber(entry.size),        // Uncompressed size (or 0xffffffff for ZIP64)
-        ...this.#encodeNumber(entry.name.length, 2), // File name length
-        0x00, 0x00,                               // Extra field length
-        ...this.#textEnc.encode(entry.name),      // File name
-                                                  // Extra field (omitted)
+      // Local file header signature = 0x04034b50 ("PK\3\4")
+      0x50, 0x4b, 0x03, 0x04,
+      // Version needed to extract (minimum) = 0x14 -> 2.0
+      0x14, 0x00,
+      // General purpose bit flag
+      0x00, 0x00,
+      // Compression method = 0 -> None / STORE
+      0x00, 0x00,
+      // File last modification time and date
+      ...this.#encodeNumber(this.#dateToDOSTime(entry.lastModified)),
+      // CRC-32 of uncompressed data
+      ...this.#encodeNumber(crc32(entry.data)),
+      // Compressed size (or 0xffffffff for ZIP64)
+      ...this.#encodeNumber(entry.size),
+      // Uncompressed size (or 0xffffffff for ZIP64)
+      ...this.#encodeNumber(entry.size),
+      // File name length
+      ...this.#encodeNumber(entry.name.length, 2),
+      // Extra field length
+      0x00, 0x00,
+      // File name
+      ...this.#textEnc.encode(entry.name),
+      // Extra field
+      ...[]
     ])
   }
 
@@ -108,27 +119,50 @@ class Zipper {
    * @memberof Zipper
    */
   #generateCentralDirectoryFileHeader(entry) {
-    // prettier-ignore
     return new Uint8Array([
-        0x50, 0x4b, 0x01, 0x02,                   // Central directory file header signature = 0x02014b50 ("PK\1\2")
-        0x2d, 0xFF,                               // Version made by = 0x2d -> 4.5, 0xFF -> Unknown
-        0x14, 0x00,                               // Version needed to extract (minimum) = 0x14 -> 2.0 (change to 4.5 for ZIP64)
-        0x00, 0x00,                               // General purpose bit flag = Bit 11 set -> Use UTF-8 Filenames
-        0x00, 0x00,                               // Compression method; e.g. none = 0, DEFLATE = 8 (or "\0x08\0x00")
-        ...this.#encodeNumber(this.#dateToDOSTime(entry.lastModified)),                   // File last modification time and date = ignore for now [TODO] (MS-DOS time format)
-        0x00, 0x00, 0x00, 0x00,                   // CRC-32 of uncompressed data = TODO!
-        ...this.#encodeNumber(entry.size),        // Compressed size (or 0xffffffff for ZIP64)
-        ...this.#encodeNumber(entry.size),        // Uncompressed size (or 0xffffffff for ZIP64)
-        ...this.#encodeNumber(entry.name.length, 2), // File name length
-        0x00, 0x00,                               // Extra field length
-        0x00, 0x00,                               // File comment length
-        0x00, 0x00,                               // Disk number where file starts (or 0xffff for ZIP64)
-        0x00, 0x00,                               // Internal file attributes
-        0x00, 0x00, 0x00, 0x00,                   // External file attributes
-        0x00, 0x00, 0x00, 0x00,                   // Relative offset of local file header (or 0xffffffff for ZIP64). This is the number of bytes between the start of the first disk on which the file occurs, and the start of the local file header. This allows software reading the central directory to locate the position of the file inside the ZIP file.
-        ...this.#textEnc.encode(entry.name),                            // File name
-        ...[],                                    // Extra field
-        ...[],                                    // File comment
+      // Central directory file header signature = 0x02014b50 ("PK\1\2")
+      0x50, 0x4b, 0x01, 0x02,
+      // Version made by = 0x2d -> 4.5, 0xFF -> Unknown
+      0x2d, 0xFF,
+      // Version needed to extract (minimum) = 0x14 -> 2.0 (change to 4.5 for ZIP64)
+      0x14, 0x00,
+      // General purpose bit flag 
+      // TODO: Set Bit 11 to use UTF-8 Filenames
+      0x00, 0x00,
+      // Compression method = 0 -> None / STORE
+      0x00, 0x00,
+      // File last modification time and date
+      ...this.#encodeNumber(this.#dateToDOSTime(entry.lastModified)),
+      // CRC-32 of uncompressed data = TODO!
+      0x00, 0x00, 0x00, 0x00,
+      // Compressed size (or 0xffffffff for ZIP64)
+      ...this.#encodeNumber(entry.size),
+      // Uncompressed size (or 0xffffffff for ZIP64)
+      ...this.#encodeNumber(entry.size),
+      // File name length
+      ...this.#encodeNumber(entry.name.length, 2),
+      // Extra field length
+      0x00, 0x00,
+      // File comment length
+      0x00, 0x00,
+      // Disk number where file starts (or 0xffff for ZIP64)
+      0x00, 0x00,
+      // Internal file attributes
+      0x00, 0x00,
+      // External file attributes
+      0x00, 0x00, 0x00, 0x00,
+      // Relative offset of local file header (or 0xffffffff for ZIP64). This is
+      // the number of bytes between the start of the first disk on which the
+      // file occurs, and the start of the local file header. This allows
+      // software reading the central directory to locate the position of the
+      // file inside the ZIP file.
+      0x00, 0x00, 0x00, 0x00,
+      // File name
+      ...this.#textEnc.encode(entry.name),
+      // Extra field
+      ...[],
+      // File comment
+      ...[],
     ])
   }
 
@@ -139,17 +173,26 @@ class Zipper {
    * @memberof Zipper
    */
   #generateEndOfCentralDirectoryRecord() {
-    // prettier-ignore
     return new Uint8Array([
-        0x50, 0x4b, 0x05, 0x06,                   // End of central directory signature = 0x06054b50 ("PK\5\6")
-        0x00, 0x00,                               // Number of this disk (or 0xffff for ZIP64) = 0
-        0x00, 0x00,                               // Disk where central directory starts (or 0xffff for ZIP64) = 0
-        ...this.#encodeNumber(1, 2), // Number of central directory records on this disk (or 0xffff for ZIP64)
-        ...this.#encodeNumber(this.#queue.length, 2), // Total number of central directory records (or 0xffff for ZIP64)
-       ...this.#encodeNumber(this.#centralDirSize),                   // Size of central directory (bytes) (or 0xffffffff for ZIP64) = TODO
-       ...this.#encodeNumber(this.#centralDirStartOffset),                   // Offset of start of central directory, relative to start of archive (or 0xffffffff for ZIP64)
-        0x00, 0x00,                               // Comment length (n)
-                                                  // Comment
+      // End of central directory signature = 0x06054b50 ("PK\5\6")
+      0x50, 0x4b, 0x05, 0x06,
+      // Number of this disk (or 0xffff for ZIP64) = 0
+      0x00, 0x00,
+      // Disk where central directory starts (or 0xffff for ZIP64) = 0
+      0x00, 0x00,
+      // Number of central directory records on this disk (or 0xffff for ZIP64)
+      ...this.#encodeNumber(1, 2),
+      // Total number of central directory records (or 0xffff for ZIP64)
+      ...this.#encodeNumber(this.#queue.length, 2),
+      // Size of central directory (bytes) (or 0xffffffff for ZIP64) = TODO
+      ...this.#encodeNumber(this.#centralDirSize),
+      // Offset of start of central directory, relative to start of archive
+      // (or 0xffffffff for ZIP64)
+      ...this.#encodeNumber(this.#centralDirStartOffset),
+      // Comment length (n)
+      0x00, 0x00,
+      // Comment
+      ...[]
     ])
   }
 
