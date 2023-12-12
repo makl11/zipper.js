@@ -9,6 +9,18 @@ export class ZipEntry {
   /** @type {Uint8Array} */ data;
   /** @type {number} */ size;
   /** @type {Date} */ lastModified;
+  /** @type {number} */ #crc = 0
+  /** @type {number} */ get crc() {
+    if (!this.#crc && this.data) this.#crc = crc32(this.data)
+    return this.#crc
+  }
+
+  constructor(name, data, size, lastModified) {
+    this.name = name
+    this.data = data
+    this.size = size
+    this.lastModified = lastModified
+  }
 }
 
 /**
@@ -95,7 +107,7 @@ class Zipper {
       // File last modification time and date
       ...this.#encodeNumber(this.#dateToDOSTime(entry.lastModified)),
       // CRC-32 of uncompressed data
-      ...this.#encodeNumber(crc32(entry.data)),
+      ...this.#encodeNumber(entry.crc),
       // Compressed size (or 0xffffffff for ZIP64)
       ...this.#encodeNumber(entry.size),
       // Uncompressed size (or 0xffffffff for ZIP64)
@@ -133,8 +145,8 @@ class Zipper {
       0x00, 0x00,
       // File last modification time and date
       ...this.#encodeNumber(this.#dateToDOSTime(entry.lastModified)),
-      // CRC-32 of uncompressed data = TODO!
-      0x00, 0x00, 0x00, 0x00,
+      // CRC-32 of uncompressed data
+      ...this.#encodeNumber(entry.crc),
       // Compressed size (or 0xffffffff for ZIP64)
       ...this.#encodeNumber(entry.size),
       // Uncompressed size (or 0xffffffff for ZIP64)
@@ -231,8 +243,8 @@ class Zipper {
    * @returns {Zipper} the current instance to allow fluent calls
    * @memberof Zipper
    */
-  add(entry) {
-    this.#queue.push(entry);
+  add({ name, data, size, lastModified }) {
+    this.#queue.push(new ZipEntry(name, data, size, lastModified));
     return this;
   }
 
