@@ -130,7 +130,7 @@ class Zipper {
    * @returns {Uint8Array}
    * @memberof Zipper
    */
-  #generateCentralDirectoryFileHeader(entry) {
+  #generateCentralDirectoryFileHeader(entry, relativeOffset) {
     return new Uint8Array([
       // Central directory file header signature = 0x02014b50 ("PK\1\2")
       0x50, 0x4b, 0x01, 0x02,
@@ -168,7 +168,7 @@ class Zipper {
       // file occurs, and the start of the local file header. This allows
       // software reading the central directory to locate the position of the
       // file inside the ZIP file.
-      0x00, 0x00, 0x00, 0x00,
+      ...this.#encodeNumber(relativeOffset),
       // File name
       ...this.#textEnc.encode(entry.name),
       // Extra field
@@ -218,8 +218,12 @@ class Zipper {
    * @memberof Zipper
    */
   *#generateZipData() {
+    const relativeLFHeaderOffsets = {}
+
     for (const entry of this.#queue) {
+      relativeLFHeaderOffsets[entry.name] = this.#centralDirStartOffset
       const header = this.#generateLocalFileHeader(entry);
+      relativeLFHeaderOffsets[entry.name] = this.#centralDirStartOffset
       this.#centralDirStartOffset += header.byteLength;
       yield header;
       this.#centralDirStartOffset += entry.size;
@@ -227,7 +231,7 @@ class Zipper {
     }
 
     for (const entry of this.#queue) {
-      const cdfh = this.#generateCentralDirectoryFileHeader(entry);
+      const cdfh = this.#generateCentralDirectoryFileHeader(entry, relativeLFHeaderOffsets[entry.name]);
       this.#centralDirSize += cdfh.byteLength;
       yield cdfh;
     }
