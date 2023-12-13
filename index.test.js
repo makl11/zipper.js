@@ -18,6 +18,16 @@ zip.add({
   size: text.byteLength,
 });
 
+const moreText = new TextEncoder().encode(
+  "Here is some more text in another location"
+);
+zip.add({
+  name: "this/is/another/test.txt",
+  data: moreText,
+  lastModified: new Date(Date.now()),
+  size: moreText.byteLength,
+});
+
 // Can be done before streaming the file
 const predictedSize = zip.predictSize();
 
