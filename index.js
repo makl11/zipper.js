@@ -6,14 +6,9 @@ import { crc32 } from "crc";
  */
 export class ZipEntry {
   /** @type {string} */ name;
-  /** @type {Uint8Array} */ data;
+  /** @type {Uint8Array | ReadableStream} */ data;
   /** @type {number} */ size;
   /** @type {Date} */ lastModified;
-  /** @type {number} */ #crc = 0
-  /** @type {number} */ get crc() {
-    if (!this.#crc && this.data) this.#crc = crc32(this.data)
-    return this.#crc
-  }
 
   constructor(name, data, size, lastModified) {
     this.name = name
@@ -94,24 +89,24 @@ class Zipper {
    * @returns {Uint8Array}
    * @memberof Zipper
    */
-  #generateLocalFileHeader(entry) {
+  #generateLocalFileHeader(entry, crc = 0) {
     return new Uint8Array([
       // Local file header signature = 0x04034b50 ("PK\3\4")
       0x50, 0x4b, 0x03, 0x04,
       // Version needed to extract (minimum) = 0x14 -> 2.0
       0x14, 0x00,
       // General purpose bit flag
-      0x00, 0x00,
+      (entry.data instanceof ReadableStream ? 0x08 : 0x00), 0x00,
       // Compression method = 0 -> None / STORE
       0x00, 0x00,
       // File last modification time and date
       ...this.#encodeNumber(this.#dateToDOSTime(entry.lastModified)),
       // CRC-32 of uncompressed data
-      ...this.#encodeNumber(entry.crc),
+      ...this.#encodeNumber(crc),
       // Compressed size (or 0xffffffff for ZIP64)
-      ...this.#encodeNumber(entry.size),
+      ...this.#encodeNumber(entry.data instanceof ReadableStream ? 0 : entry.size),
       // Uncompressed size (or 0xffffffff for ZIP64)
-      ...this.#encodeNumber(entry.size),
+      ...this.#encodeNumber(entry.data instanceof ReadableStream ? 0 : entry.size),
       // File name length
       ...this.#encodeNumber(entry.name.length, 2),
       // Extra field length
@@ -124,13 +119,34 @@ class Zipper {
   }
 
   /**
+   * Generate a data descriptor
+   *
+   * @param {number} crc
+   * @param {number} size
+   * @returns {Uint8Array}
+   * @memberof Zipper
+   */
+  #generateDataDescriptor(crc, size) {
+    return new Uint8Array([
+      // Data descriptor signature = 0x08074b50 ("PK\7\8")
+      0x50, 0x4b, 0x07, 0x08,
+      // CRC-32 of uncompressed data
+      ...this.#encodeNumber(crc),
+      // Compressed size (or 0xffffffff for ZIP64)
+      ...this.#encodeNumber(size),
+      // Uncompressed size (or 0xffffffff for ZIP64)
+      ...this.#encodeNumber(size),
+    ]);
+  }
+
+  /**
    * Generate Central Directory File Header
    *
    * @param {ZipEntry} entry
    * @returns {Uint8Array}
    * @memberof Zipper
    */
-  #generateCentralDirectoryFileHeader(entry, relativeOffset) {
+  #generateCentralDirectoryFileHeader(entry, relativeOffset, crc) {
     return new Uint8Array([
       // Central directory file header signature = 0x02014b50 ("PK\1\2")
       0x50, 0x4b, 0x01, 0x02,
@@ -140,13 +156,13 @@ class Zipper {
       0x14, 0x00,
       // General purpose bit flag 
       // TODO: Set Bit 11 to use UTF-8 Filenames
-      0x00, 0x00,
+      (entry.data instanceof ReadableStream ? 0x08 : 0x00), 0x00,
       // Compression method = 0 -> None / STORE
       0x00, 0x00,
       // File last modification time and date
       ...this.#encodeNumber(this.#dateToDOSTime(entry.lastModified)),
       // CRC-32 of uncompressed data
-      ...this.#encodeNumber(entry.crc),
+      ...this.#encodeNumber(crc),
       // Compressed size (or 0xffffffff for ZIP64)
       ...this.#encodeNumber(entry.size),
       // Uncompressed size (or 0xffffffff for ZIP64)
@@ -217,27 +233,49 @@ class Zipper {
    * @returns {Uint8Array}
    * @memberof Zipper
    */
-  *#generateZipData() {
+  async *#generateZipData() {
     const relativeLFHeaderOffsets = {}
+    const crc32Cache = {}
 
     for (const entry of this.#queue) {
       relativeLFHeaderOffsets[entry.name] = this.#centralDirStartOffset
-      const header = this.#generateLocalFileHeader(entry);
-      relativeLFHeaderOffsets[entry.name] = this.#centralDirStartOffset
-      this.#centralDirStartOffset += header.byteLength;
-      yield header;
-      this.#centralDirStartOffset += entry.size;
-      yield entry.data;
+
+      if (entry.data instanceof ReadableStream) {
+        const header = this.#generateLocalFileHeader(entry);
+        this.#centralDirStartOffset += header.byteLength;
+        yield header;
+        let crc;
+        let size = 0;
+        for await (const chunk of entry.data) {
+          crc = crc32(chunk, crc);
+          size += chunk.byteLength;
+          this.#centralDirStartOffset += chunk.byteLength;
+          yield chunk;
+        }
+        crc32Cache[entry.name] = crc
+        this.#centralDirStartOffset += 16; // size of data descriptor
+        yield this.#generateDataDescriptor(crc, size);
+      } else {
+        crc32Cache[entry.name] = crc32(entry.data)
+        const header = this.#generateLocalFileHeader(entry, crc32Cache[entry.name]);
+        this.#centralDirStartOffset += header.byteLength;
+        yield header;
+        this.#centralDirStartOffset += entry.size;
+        yield entry.data;
+      }
     }
 
     for (const entry of this.#queue) {
-      const cdfh = this.#generateCentralDirectoryFileHeader(entry, relativeLFHeaderOffsets[entry.name]);
+      const cdfh = this.#generateCentralDirectoryFileHeader(
+        entry,
+        relativeLFHeaderOffsets[entry.name],
+        crc32Cache[entry.name],
+      );
       this.#centralDirSize += cdfh.byteLength;
       yield cdfh;
     }
 
     yield this.#generateEndOfCentralDirectoryRecord();
-    return;
   }
 
   /**
@@ -260,9 +298,12 @@ class Zipper {
    * @memberof Zipper
    */
   predictSize() {
-    return this.#queue.reduce((totalSize, { size, name }) => {
+    return this.#queue.reduce((totalSize, { size, name, data }) => {
       totalSize += 30 + name.length; // local file header
       totalSize += size; // file data
+      if (data instanceof ReadableStream) {
+        totalSize += 16; // data descriptor
+      }
       totalSize += 46 + name.length; // central directory file header
       return totalSize;
     }, 22); // end of central directory record
@@ -278,9 +319,9 @@ class Zipper {
     const gen = this.#generateZipData.bind(this);
     return new ReadableStream({
       type: "bytes",
-      start(controller) {
+      async start(controller) {
         try {
-          for (let chunk of gen()) controller.enqueue(chunk);
+          for await (const chunk of gen()) controller.enqueue(chunk);
           controller.close();
         } catch (error) {
           controller.error(error);
