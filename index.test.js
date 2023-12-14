@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { createWriteStream, rmSync, statSync } from "node:fs";
-import { Writable } from "node:stream";
+import { createReadStream, createWriteStream, rmSync, statSync } from "node:fs";
+import { Readable, Writable } from "node:stream";
 import Zipper from "./index.js";
 
 const OUTFILE = "./out.zip";
@@ -18,15 +18,23 @@ zip.add({
   size: text.byteLength,
 });
 
-const moreText = new TextEncoder().encode(
+const moreText = new Blob([
   "Here is some more text in another location"
-);
+]);
 zip.add({
   name: "this/is/another/test.txt",
-  data: moreText,
+  data: moreText.stream(),
   lastModified: new Date(Date.now()),
-  size: moreText.byteLength,
+  size: moreText.size,
 });
+
+const index_jsStats = statSync("./index.js")
+zip.add({
+  name: "index.js",
+  data: Readable.toWeb(createReadStream("./index.js")),
+  lastModified: index_jsStats.mtime,
+  size: index_jsStats.size,
+})
 
 // Can be done before streaming the file
 const predictedSize = zip.predictSize();
