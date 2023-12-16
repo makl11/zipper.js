@@ -135,3 +135,6 @@ dist
 # generated .d.ts files
 *.d.ts
 *.d.ts.map
+
+# generated large bin files
+*.bin

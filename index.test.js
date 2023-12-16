@@ -40,14 +40,15 @@ for (let i = 0; i < 0xFFFF; i++) {
   })
 }
 
-
-const largeFileStats = statSync("./large-file.bin")
-zip.add({
-  name: "large-file.bin",
-  data: Readable.toWeb(createReadStream("./large-file.bin")),
-  lastModified: largeFileStats.mtime,
-  size: largeFileStats.size,
-})
+if (!process.env.CI) {
+  const largeFileStats = statSync("./large-file.bin")
+  zip.add({
+    name: "large-file.bin",
+    data: Readable.toWeb(createReadStream("./large-file.bin")),
+    lastModified: largeFileStats.mtime,
+    size: largeFileStats.size,
+  })
+}
 
 const licenseStats = statSync("./LICENSE")
 zip.add({
@@ -57,14 +58,16 @@ zip.add({
   size: licenseStats.size,
 })
 
-const oneGBFileStats = statSync("./1gb-file.bin")
-for (let i = 0; i < 4; i++) {
-  zip.add({
-    name: `1gb-file-${i}.bin`,
-    data: Readable.toWeb(createReadStream("./1gb-file.bin")),
-    lastModified: oneGBFileStats.mtime,
-    size: oneGBFileStats.size,
-  })
+if (!process.env.CI) {
+  const oneGBFileStats = statSync("./1gb-file.bin")
+  for (let i = 0; i < 4; i++) {
+    zip.add({
+      name: `1gb-file-${i}.bin`,
+      data: Readable.toWeb(createReadStream("./1gb-file.bin")),
+      lastModified: oneGBFileStats.mtime,
+      size: oneGBFileStats.size,
+    })
+  }
 }
 
 // Can be done before streaming the file
