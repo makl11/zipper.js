@@ -20,8 +20,7 @@ export class ZipEntry {
 
 /**
  * A simple zip file packer. \
- * Does *not* support ZIP64 (>4GB) (_yet_!) \
- * Does *not* support compression or encryption. Only unencrypted STORE is supported.
+ * Does and will *not* support compression or encryption. Only unencrypted STORE is supported.
  * @export
  * @class Zipper
  */
@@ -38,11 +37,15 @@ class Zipper {
    */
   #queue = [];
 
+  #centralDirSize = 0;
+  #centralDirStartOffset = 0;
+  #bytesWritten = 0;
+
   /**
    * Encodes a number (int) as bytes
    *
    * @param {number} num integer only, decimals get rounded with @func {Number.toFixed}!
-   * @param {4 | 2} byteCount Number of bytes to encode
+   * @param {number} byteCount Number of bytes to encode
    * @returns {Uint8Array}
    * @memberof Zipper
    */
@@ -90,11 +93,13 @@ class Zipper {
    * @memberof Zipper
    */
   #generateLocalFileHeader(entry, crc = 0) {
+    const useZip64 = entry.size > 0xffffffff;
+    const size = entry.data instanceof ReadableStream ? 0 : entry.size;
     return new Uint8Array([
       // Local file header signature = 0x04034b50 ("PK\3\4")
       0x50, 0x4b, 0x03, 0x04,
       // Version needed to extract (minimum) = 0x14 -> 2.0
-      0x14, 0x00,
+      (useZip64 ? 0x2d : 0x14), 0x00,
       // General purpose bit flag
       (entry.data instanceof ReadableStream ? 0x08 : 0x00), 0x00,
       // Compression method = 0 -> None / STORE
@@ -103,18 +108,27 @@ class Zipper {
       ...this.#encodeNumber(this.#dateToDOSTime(entry.lastModified)),
       // CRC-32 of uncompressed data
       ...this.#encodeNumber(crc),
-      // Compressed size (or 0xffffffff for ZIP64)
-      ...this.#encodeNumber(entry.data instanceof ReadableStream ? 0 : entry.size),
-      // Uncompressed size (or 0xffffffff for ZIP64)
-      ...this.#encodeNumber(entry.data instanceof ReadableStream ? 0 : entry.size),
+      // Compressed size
+      ...this.#encodeNumber(useZip64 ? 0xffffffff : size),
+      // Uncompressed size
+      ...this.#encodeNumber(useZip64 ? 0xffffffff : size),
       // File name length
       ...this.#encodeNumber(entry.name.length, 2),
       // Extra field length
-      0x00, 0x00,
+      ...(useZip64 ? [0x14, 0x00] : [0x00, 0x00]),
       // File name
       ...this.#textEnc.encode(entry.name),
       // Extra field
-      ...[]
+      ...(useZip64 ? [
+        // Extra field header ID for ZIP64
+        0x01, 0x00,
+        // Extra field data size
+        0x10, 0x00,
+        // Original uncompressed file size
+        ...this.#encodeNumber(entry.data instanceof ReadableStream ? 0xffffffff : size, 8),
+        // Compressed size
+        ...this.#encodeNumber(entry.data instanceof ReadableStream ? 0xffffffff : size, 8),
+      ] : []),
     ])
   }
 
@@ -132,10 +146,10 @@ class Zipper {
       0x50, 0x4b, 0x07, 0x08,
       // CRC-32 of uncompressed data
       ...this.#encodeNumber(crc),
-      // Compressed size (or 0xffffffff for ZIP64)
-      ...this.#encodeNumber(size),
-      // Uncompressed size (or 0xffffffff for ZIP64)
-      ...this.#encodeNumber(size),
+      // Compressed size
+      ...this.#encodeNumber(size, size > 0xffffffff ? 8 : 4),
+      // Uncompressed size
+      ...this.#encodeNumber(size, size > 0xffffffff ? 8 : 4),
     ]);
   }
 
@@ -147,13 +161,14 @@ class Zipper {
    * @memberof Zipper
    */
   #generateCentralDirectoryFileHeader(entry, relativeOffset, crc) {
+    const useZip64 = entry.size > 0xffffffff || relativeOffset > 0xffffffff;
     return new Uint8Array([
       // Central directory file header signature = 0x02014b50 ("PK\1\2")
       0x50, 0x4b, 0x01, 0x02,
       // Version made by = 0x2d -> 4.5, 0xFF -> Unknown
       0x2d, 0xFF,
-      // Version needed to extract (minimum) = 0x14 -> 2.0 (change to 4.5 for ZIP64)
-      0x14, 0x00,
+      // Version needed to extract (minimum) = 0x14 -> 2.0 or 0x2d -> 4.5 for ZIP64
+      (useZip64 ? 0x2d : 0x14), 0x00,
       // General purpose bit flag 
       // TODO: Set Bit 11 to use UTF-8 Filenames
       (entry.data instanceof ReadableStream ? 0x08 : 0x00), 0x00,
@@ -163,14 +178,14 @@ class Zipper {
       ...this.#encodeNumber(this.#dateToDOSTime(entry.lastModified)),
       // CRC-32 of uncompressed data
       ...this.#encodeNumber(crc),
-      // Compressed size (or 0xffffffff for ZIP64)
-      ...this.#encodeNumber(entry.size),
-      // Uncompressed size (or 0xffffffff for ZIP64)
-      ...this.#encodeNumber(entry.size),
+      // Compressed size
+      ...this.#encodeNumber(useZip64 ? 0xffffffff : entry.size),
+      // Uncompressed size
+      ...this.#encodeNumber(useZip64 ? 0xffffffff : entry.size),
       // File name length
       ...this.#encodeNumber(entry.name.length, 2),
       // Extra field length
-      0x00, 0x00,
+      ...(useZip64 ? [0x1C, 0x00] : [0x00, 0x00]),
       // File comment length
       0x00, 0x00,
       // Disk number where file starts (or 0xffff for ZIP64)
@@ -179,53 +194,97 @@ class Zipper {
       0x00, 0x00,
       // External file attributes
       0x00, 0x00, 0x00, 0x00,
-      // Relative offset of local file header (or 0xffffffff for ZIP64). This is
-      // the number of bytes between the start of the first disk on which the
-      // file occurs, and the start of the local file header. This allows
-      // software reading the central directory to locate the position of the
-      // file inside the ZIP file.
-      ...this.#encodeNumber(relativeOffset),
+      // Relative offset of local file header
+      ...this.#encodeNumber(useZip64 ? 0xffffffff : relativeOffset),
       // File name
       ...this.#textEnc.encode(entry.name),
       // Extra field
-      ...[],
+      ...(useZip64 ? [
+        // Extra field header ID for ZIP64
+        0x01, 0x00,
+        // Extra field data size
+        0x18, 0x00,
+        // Original uncompressed file size
+        ...this.#encodeNumber(entry.size, 8),
+        // Compressed size
+        ...this.#encodeNumber(entry.size, 8),
+        // Relative offset of local header
+        ...this.#encodeNumber(relativeOffset, 8),
+      ] : []),
       // File comment
       ...[],
     ])
   }
 
+  #generateZip64EndOfCentralDirectoryRecord() {
+    return new Uint8Array([
+      // ZIP64 end of central directory signature = 0x06064b50 ("PK\6\6")
+      0x50, 0x4b, 0x06, 0x06,
+      // Size of ZIP64 end of central directory record
+      ...this.#encodeNumber(44, 8),
+      // Version made by
+      0x2d, 0xff,
+      // Version needed to extract
+      0x2d, 0x00,
+      // Number of this disk = 0
+      0x00, 0x00, 0x00, 0x00,
+      // Disk where ZIP64 end of central directory starts = 0
+      0x00, 0x00, 0x00, 0x00,
+      // Number of central directory records on this disk
+      ...this.#encodeNumber(this.#queue.length, 8),
+      // Total number of central directory records
+      ...this.#encodeNumber(this.#queue.length, 8),
+      // Size of central directory (bytes)
+      ...this.#encodeNumber(this.#centralDirSize, 8),
+      // Offset of start of central directory, relative to start of archive
+      ...this.#encodeNumber(this.#centralDirStartOffset, 8),
+      // ZIP64 extensible data sector
+      ...[],
+    ]);
+  }
+
+  #generateZip64EndOfCentralDirectoryLocator() {
+    return new Uint8Array([
+      // ZIP64 end of central directory locator signature = 0x07064b50 ("PK\6\7")
+      0x50, 0x4b, 0x06, 0x07,
+      // Disk where ZIP64 end of central directory starts = 0
+      0x00, 0x00, 0x00, 0x00,
+      // Offset of ZIP64 end of central directory record
+      ...this.#encodeNumber(this.#centralDirStartOffset + this.#centralDirSize, 8),
+      // Total number of disks = 1
+      0x01, 0x00, 0x00, 0x00
+    ]);
+  }
+
   /**
    * Generate End of Central Directory Record
    *
+   * @param {boolean} useZip64
    * @returns {Uint8Array}
    * @memberof Zipper
    */
-  #generateEndOfCentralDirectoryRecord() {
+  #generateEndOfCentralDirectoryRecord(useZip64 = false) {
     return new Uint8Array([
       // End of central directory signature = 0x06054b50 ("PK\5\6")
       0x50, 0x4b, 0x05, 0x06,
-      // Number of this disk (or 0xffff for ZIP64) = 0
+      // Number of this disk = 0
       0x00, 0x00,
-      // Disk where central directory starts (or 0xffff for ZIP64) = 0
+      // Disk where central directory starts = 0
       0x00, 0x00,
-      // Number of central directory records on this disk (or 0xffff for ZIP64)
-      ...this.#encodeNumber(this.#queue.length, 2),
-      // Total number of central directory records (or 0xffff for ZIP64)
-      ...this.#encodeNumber(this.#queue.length, 2),
-      // Size of central directory (bytes) (or 0xffffffff for ZIP64) = TODO
-      ...this.#encodeNumber(this.#centralDirSize),
+      // Number of central directory records on this disk
+      ...this.#encodeNumber(useZip64 ? 0xffff : this.#queue.length, 2),
+      // Total number of central directory records
+      ...this.#encodeNumber(useZip64 ? 0xffff : this.#queue.length, 2),
+      // Size of central directory (bytes)
+      ...this.#encodeNumber(useZip64 ? 0xffffffff : this.#centralDirSize),
       // Offset of start of central directory, relative to start of archive
-      // (or 0xffffffff for ZIP64)
-      ...this.#encodeNumber(this.#centralDirStartOffset),
+      ...this.#encodeNumber(useZip64 ? 0xffffffff : this.#centralDirStartOffset),
       // Comment length (n)
       0x00, 0x00,
       // Comment
       ...[]
     ])
   }
-
-  #centralDirSize = 0;
-  #centralDirStartOffset = 0;
 
   /**
    * Generate zip binary data
@@ -234,48 +293,60 @@ class Zipper {
    * @memberof Zipper
    */
   async *#generateZipData() {
+    let useZip64Archive = this.#queue.length > 0xffff
     const relativeLFHeaderOffsets = {}
     const crc32Cache = {}
 
     for (const entry of this.#queue) {
-      relativeLFHeaderOffsets[entry.name] = this.#centralDirStartOffset
+      relativeLFHeaderOffsets[entry.name] = this.#bytesWritten
+      useZip64Archive |= entry.size > 0xffffffff
 
       if (entry.data instanceof ReadableStream) {
         const header = this.#generateLocalFileHeader(entry);
-        this.#centralDirStartOffset += header.byteLength;
+        this.#bytesWritten += header.byteLength;
         yield header;
         let crc;
         let size = 0;
         for await (const chunk of entry.data) {
           crc = crc32(chunk, crc);
           size += chunk.byteLength;
-          this.#centralDirStartOffset += chunk.byteLength;
           yield chunk;
         }
+        this.#bytesWritten += size;
         crc32Cache[entry.name] = crc
-        this.#centralDirStartOffset += 16; // size of data descriptor
+        this.#bytesWritten += (entry.size > 0xffffffff ? 24 : 16); // size of data descriptor
         yield this.#generateDataDescriptor(crc, size);
       } else {
         crc32Cache[entry.name] = crc32(entry.data)
         const header = this.#generateLocalFileHeader(entry, crc32Cache[entry.name]);
-        this.#centralDirStartOffset += header.byteLength;
+        this.#bytesWritten += header.byteLength;
         yield header;
-        this.#centralDirStartOffset += entry.size;
+        this.#bytesWritten += entry.size;
         yield entry.data;
       }
     }
 
+    this.#centralDirStartOffset = this.#bytesWritten;
     for (const entry of this.#queue) {
+      useZip64Archive |= relativeLFHeaderOffsets[entry.name] > 0xffffffff
       const cdfh = this.#generateCentralDirectoryFileHeader(
         entry,
         relativeLFHeaderOffsets[entry.name],
         crc32Cache[entry.name],
       );
-      this.#centralDirSize += cdfh.byteLength;
+      this.#bytesWritten += cdfh.byteLength;
       yield cdfh;
     }
+    this.#centralDirSize = this.#bytesWritten - this.#centralDirStartOffset;
 
-    yield this.#generateEndOfCentralDirectoryRecord();
+    useZip64Archive |= this.#centralDirStartOffset > 0xffffffff || this.#centralDirSize > 0xffffffff
+
+    if (useZip64Archive) {
+      yield this.#generateZip64EndOfCentralDirectoryRecord();
+      yield this.#generateZip64EndOfCentralDirectoryLocator();
+    }
+
+    yield this.#generateEndOfCentralDirectoryRecord(useZip64Archive);
   }
 
   /**
@@ -298,15 +369,25 @@ class Zipper {
    * @memberof Zipper
    */
   predictSize() {
-    return this.#queue.reduce((totalSize, { size, name, data }) => {
+    let isZip64 = this.#queue.length > 0xffff;
+    const entriesTotalSize = this.#queue.reduce((totalSize, { size, name, data }) => {
       totalSize += 30 + name.length; // local file header
-      totalSize += size; // file data
+      if (size > 0xffffffff) totalSize += 20; //  local file header zip64 extra field
       if (data instanceof ReadableStream) {
-        totalSize += 16; // data descriptor
+        totalSize += size > 0xffffffff ? 24 : 16; // data descriptor
       }
       totalSize += 46 + name.length; // central directory file header
+      if (size > 0xffffffff || totalSize > 0xffffffff) totalSize += 28; // central directory file header zip64 extra field
+      totalSize += size; // file data
+      isZip64 |= size > 0xffffffff || totalSize > 0xffffffff;
       return totalSize;
-    }, 22); // end of central directory record
+    }, 0);
+    return (
+      22 + // end of central directory record
+      (isZip64 ? 56 : 0) + // zip64 end of central directory record
+      (isZip64 ? 20 : 0) + // zip64 end of central directory locator
+      entriesTotalSize
+    )
   }
 
   /**
