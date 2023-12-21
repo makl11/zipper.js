@@ -44,16 +44,16 @@ class Zipper {
   /**
    * Encodes a number (int) as bytes
    *
-   * @param {number} num integer only, decimals get rounded with @func {Number.toFixed}!
+   * @param {number} num integer only, decimals get rounded with  `Math.ceil`
    * @param {number} byteCount Number of bytes to encode
    * @returns {Uint8Array}
    * @memberof Zipper
    */
   #encodeNumber(num, byteCount = 4) {
-    num = num.toFixed();
     const out = new Uint8Array(byteCount);
+    const bigNum = BigInt(Math.ceil(num));
     while (--byteCount >= 0) {
-      out[byteCount] = num >> (byteCount * 8);
+      out[byteCount] = Number(bigNum >> BigInt(byteCount * 8));
     }
     return out;
   }
