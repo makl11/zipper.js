@@ -1,9 +1,18 @@
 {
-  "include": ["index.js"],
-  "compilerOptions": {
-    "allowJs": true,
-    "declaration": true,
-    "emitDeclarationOnly": true,
-    "declarationMap": true
-  }
+	"include": ["index.js"],
+	"compilerOptions": {
+		"allowJs": true,
+		"declaration": true,
+		"emitDeclarationOnly": true,
+		"declarationMap": true,
+		"checkJs": true,
+		"strict": true,
+		"isolatedModules": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"target": "ES2022",
+		"module": "Node16",
+		"lib": ["ESNext", "DOM"],
+		"moduleResolution": "Node16"
+	}
 }
