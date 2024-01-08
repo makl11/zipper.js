@@ -1,22 +1,21 @@
 import { crc32 } from "crc";
 
 /**
+ * @typedef {Object} ZipEntry 
+ * A file entry to be stored in the zip archive
+ * @property {string} name
+ * The name of the file inside the zip archive (including path) e.g. `foo/bar.txt`. \
+ * The path separator is always `/` (forward slash) and is not affected by the OS. \
+ * The root directory is `/`. \
+ * The name must not contain a drive or device letter, or a leading slash.
+ * @property {Uint8Array | ReadableStream<Uint8Array>} data 
+ * The data to be added to the zip archive.
+ * @property {number} size 
+ * The size of the data in bytes. Must **always** be set to allow the zipper to predict the final zip size.
+ * @property {Date} lastModified 
+ * The last modified date of the file.
  * @export
- * @class ZipEntry
  */
-export class ZipEntry {
-  /** @type {string} */ name;
-  /** @type {Uint8Array | ReadableStream} */ data;
-  /** @type {number} */ size;
-  /** @type {Date} */ lastModified;
-
-  constructor(name, data, size, lastModified) {
-    this.name = name
-    this.data = data
-    this.size = size
-    this.lastModified = lastModified
-  }
-}
 
 /**
  * A simple zip file packer. \
@@ -356,8 +355,9 @@ class Zipper {
    * @returns {Zipper} the current instance to allow fluent calls
    * @memberof Zipper
    */
-  add({ name, data, size, lastModified }) {
-    this.#queue.push(new ZipEntry(name, data, size, lastModified));
+  add(entry) {
+    // TODO: Validate entry
+    this.#queue.push(entry);
     return this;
   }
 
