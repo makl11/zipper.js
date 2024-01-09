@@ -76,7 +76,7 @@ const predictedSize = zip.predictSize();
 
 try {
   rmSync(OUTFILE, { force: true });
-} catch {}
+} catch { }
 
 const outStream = Writable.toWeb(
   createWriteStream(OUTFILE, { encoding: "binary" })
@@ -96,5 +96,7 @@ zip.stream()
       console.error("😒 The zips final size does not match the prediction");
       console.error(`The difference between the two is ${predictedSize - actualSize} bytes`);
     }
-    try { rmSync(OUTFILE, { force: true }) } catch { }
+    if (process.env.CI) {
+      try { rmSync(OUTFILE, { force: true }) } catch { }
+    }
   });
