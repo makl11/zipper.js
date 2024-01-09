@@ -8,6 +8,20 @@ const OUTFILE = "./out.zip";
 
 const zip = new Zipper();
 
+zip
+  .add({
+    name: "empty.txt",
+    data: Readable.toWeb(createReadStream("./empty.txt")),
+    lastModified: new Date(0),
+    size: 0,
+  })
+  .add({
+    name: "empty_buf.txt",
+    data: new Uint8Array(0),
+    lastModified: new Date(0),
+    size: 0,
+  });
+
 const textEncoder = new TextEncoder()
 
 const text = textEncoder.encode(
