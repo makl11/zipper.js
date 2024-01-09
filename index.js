@@ -343,6 +343,7 @@ class Zipper {
         yield header;
         let crc;
         let size = 0;
+        // @ts-expect-error async iterator is only available in firefox
         for await (const chunk of entry.data) {
           crc = crc32(chunk, crc);
           size += chunk.byteLength;
