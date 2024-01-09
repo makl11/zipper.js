@@ -335,7 +335,7 @@ class Zipper {
 
     for (const entry of this.queue) {
       relativeLFHeaderOffsets[entry.name] = this.bytesWritten
-      useZip64Archive |= entry.size > 0xffffffff
+      useZip64Archive = useZip64Archive || entry.size > 0xffffffff
 
       if (entry.data instanceof ReadableStream) {
         const header = this.generateLocalFileHeader(entry);
@@ -364,7 +364,7 @@ class Zipper {
 
     this.centralDirStartOffset = this.bytesWritten;
     for (const entry of this.queue) {
-      useZip64Archive |= relativeLFHeaderOffsets[entry.name] > 0xffffffff
+      useZip64Archive = useZip64Archive || relativeLFHeaderOffsets[entry.name] > 0xffffffff
       const cdfh = this.generateCentralDirectoryFileHeader(
         entry,
         relativeLFHeaderOffsets[entry.name],
@@ -375,7 +375,7 @@ class Zipper {
     }
     this.centralDirSize = this.bytesWritten - this.centralDirStartOffset;
 
-    useZip64Archive |= this.centralDirStartOffset > 0xffffffff || this.centralDirSize > 0xffffffff
+    useZip64Archive = useZip64Archive || this.centralDirStartOffset > 0xffffffff || this.centralDirSize > 0xffffffff
 
     if (useZip64Archive) {
       yield this.generateZip64EndOfCentralDirectoryRecord();
@@ -416,7 +416,7 @@ class Zipper {
       totalSize += 46 + name.length; // central directory file header
       if (size > 0xffffffff || totalSize > 0xffffffff) totalSize += 28; // central directory file header zip64 extra field
       totalSize += size; // file data
-      isZip64 |= size > 0xffffffff || totalSize > 0xffffffff;
+      isZip64 = isZip64 || size > 0xffffffff || totalSize > 0xffffffff;
       return totalSize;
     }, 0);
     return (
