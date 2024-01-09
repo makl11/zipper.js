@@ -62,10 +62,10 @@ class Zipper {
   bytesWritten = 0;
 
   /**
-   * Encodes a number (int) as bytes
+   * Encodes a number (int) as bytes in little endian order
    *
-   * @param {number} num integer only, decimals get rounded with  `Math.ceil`
-   * @param {number} byteCount Number of bytes to encode
+   * @param {number} num integer only, decimals get rounded with `Math.ceil`
+   * @param {number} [byteCount=4] Number of bytes to encode
    * @returns {Uint8Array}
    * @memberof Zipper
    * @private
@@ -110,6 +110,7 @@ class Zipper {
    * Generate Local File Header
    *
    * @param {ZipEntry} entry
+   * @param {number} [crc=0]
    * @returns {Uint8Array}
    * @memberof Zipper
    * @private
@@ -175,9 +176,9 @@ class Zipper {
   }
 
   /**
-   * Generate Central Directory File Header
-   *
    * @param {ZipEntry} entry
+   * @param {number} relativeOffset
+   * @param {number} crc
    * @returns {Uint8Array}
    * @memberof Zipper
    * @private
@@ -289,9 +290,7 @@ class Zipper {
   }
 
   /**
-   * Generate End of Central Directory Record
-   *
-   * @param {boolean} useZip64
+   * @param {boolean} [useZip64=false]
    * @returns {Uint8Array}
    * @memberof Zipper
    * @private
@@ -320,15 +319,18 @@ class Zipper {
   }
 
   /**
-   * Generate zip binary data
-   *
-   * @returns {Uint8Array}
+   * @async
+   * @generator
+   * @yields {Uint8Array}
+   * @returns {AsyncGenerator<Uint8Array>}
    * @memberof Zipper
    * @private
    */
   async *generateZipData() {
     let useZip64Archive = this.queue.length > 0xffff
+    /** @type {{[name: string]: number}} */
     const relativeLFHeaderOffsets = {}
+    /** @type {{[name: string]: number}} */
     const crc32Cache = {}
 
     for (const entry of this.queue) {
@@ -384,7 +386,7 @@ class Zipper {
   }
 
   /**
-   * Add a zip entry
+   * Queue an entry to be zipped later on when streaming the zip file content.
    *
    * @param {ZipEntry} entry
    * @returns {Zipper} the current instance to allow fluent calls
