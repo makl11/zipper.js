@@ -348,6 +348,7 @@ class Zipper {
           size += chunk.byteLength;
           yield chunk;
         }
+        crc = crc ?? 0
         this.bytesWritten += size;
         crc32Cache[entry.name] = crc
         this.bytesWritten += (entry.size > 0xffffffff ? 24 : 16); // size of data descriptor
@@ -357,8 +358,10 @@ class Zipper {
         const header = this.generateLocalFileHeader(entry, crc32Cache[entry.name]);
         this.bytesWritten += header.byteLength;
         yield header;
-        this.bytesWritten += entry.size;
-        yield entry.data;
+        if (entry.size > 0) {
+          this.bytesWritten += entry.size;
+          yield entry.data;
+        }
       }
     }
 
