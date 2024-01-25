@@ -1,7 +1,7 @@
 {
   "name": "@makl11/zipper.js",
   "type": "module",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "main": "index.js",
   "types": "index.d.ts",
   "repository": {
@@ -27,6 +27,10 @@
   "files": [
     "index.js",
     "index.d.ts",
-    "index.d.ts.map"
+    "index.d.ts.map",
+    "node-compat.js",
+    "node-compat.d.ts",
+    "node-compat.d.ts.map",
+    "LICENSE"
   ]
 }
