@@ -1,4 +1,5 @@
 import { crc32 } from "crc";
+export { openFileAsReadableStream } from "./node-compat.js"
 
 /**
  * @typedef {Object} ZipEntry 
