@@ -17,7 +17,6 @@ export function openFileAsReadableStream(filePath, chunkSize = 16777216) {
       fileHandle = await open(filePath, "r");
     },
     async pull(controller) {
-      console.log("Desired Size", controller.desiredSize);
       if (!controller.byobRequest) throw "No BYOB Request"
       if (!controller.byobRequest.view) throw "No View in BYOB Request"
       const view = controller.byobRequest.view;
