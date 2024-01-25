@@ -438,13 +438,15 @@ class Zipper {
    * @memberof Zipper
    */
   stream() {
-    const gen = this.generateZipData.bind(this);
+    const generator = this.generateZipData()
     return new ReadableStream({
       type: "bytes",
-      async start(controller) {
+      start(controller) { },
+      async pull(controller) {
         try {
-          for await (const chunk of gen()) controller.enqueue(chunk);
-          controller.close();
+          const { value, done } = await generator.next()
+          if (done) controller.close()
+          controller.enqueue(value);
         } catch (error) {
           controller.error(error);
           throw error;
