@@ -22,7 +22,7 @@ export function openFileAsReadableStream(filePath, chunkSize = 16777216) {
       if (!controller.byobRequest.view) throw "No View in BYOB Request"
       const view = controller.byobRequest.view;
 
-      const { bytesRead } = await fileHandle.read(view, 0, view.byteLength, position);
+      const { bytesRead } = await fileHandle.read(new Uint8Array(view), 0, view.byteLength, position);
       if (bytesRead === 0) {
         await fileHandle.close();
         controller.close();
