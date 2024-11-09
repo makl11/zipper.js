@@ -11,7 +11,7 @@ const zip = new Zipper();
 zip
   .add({
     name: "empty.txt",
-    data: Readable.toWeb(createReadStream("./empty.txt")),
+    data: /** @type {ReadableStream<Uint8Array>} */(Readable.toWeb(createReadStream("./empty.txt"))),
     lastModified: new Date(0),
     size: 0,
   })
@@ -57,7 +57,7 @@ for (let i = 0; i < 0xFFFF; i++) {
 const licenseStats = statSync("./LICENSE")
 zip.add({
   name: "LICENSE",
-  data: Readable.toWeb(createReadStream("./LICENSE")),
+  data: /** @type {ReadableStream<Uint8Array>} */(Readable.toWeb(createReadStream("./LICENSE"))),
   lastModified: licenseStats.mtime,
   size: licenseStats.size,
 })
