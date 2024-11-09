@@ -1,6 +1,7 @@
 {
 	"include": ["index.js"],
 	"compilerOptions": {
+		"outDir": "dist",
 		"allowJs": true,
 		"declaration": true,
 		"emitDeclarationOnly": true,
