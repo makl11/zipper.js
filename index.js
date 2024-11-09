@@ -28,7 +28,6 @@ class Zipper {
   /**
    * @type {TextEncoder}
    * @memberof Zipper
-   * @private
    * @readonly
    */
   textEnc = new TextEncoder();
@@ -36,7 +35,6 @@ class Zipper {
   /**
    * @type {ZipEntry[]}
    * @memberof Zipper
-   * @private
    * @readonly
    */
   queue = [];
@@ -44,21 +42,18 @@ class Zipper {
   /**
    * @type {number}
    * @memberof Zipper
-   * @private
    */
   centralDirSize = 0;
 
   /**
    * @type {number}
    * @memberof Zipper
-   * @private
    */
   centralDirStartOffset = 0;
 
   /**
    * @type {number}
    * @memberof Zipper
-   * @private
    */
   bytesWritten = 0;
 
@@ -69,7 +64,6 @@ class Zipper {
    * @param {number} [byteCount=4] Number of bytes to encode
    * @returns {Uint8Array}
    * @memberof Zipper
-   * @private
    */
   encodeNumber(num, byteCount = 4) {
     const out = new Uint8Array(byteCount);
@@ -84,7 +78,6 @@ class Zipper {
    * @param {Date} date
    * @return {number}
    * @memberof Zipper
-   * @private
    */
   dateToDOSTime(date) {
     const year = date.getUTCFullYear();
@@ -114,7 +107,6 @@ class Zipper {
    * @param {number} [crc=0]
    * @returns {Uint8Array}
    * @memberof Zipper
-   * @private
    */
   generateLocalFileHeader(entry, crc = 0) {
     const useZip64 = entry.size > 0xffffffff;
@@ -161,7 +153,6 @@ class Zipper {
    * @param {number} size
    * @returns {Uint8Array}
    * @memberof Zipper
-   * @private
    */
   generateDataDescriptor(crc, size) {
     return new Uint8Array([
@@ -182,7 +173,6 @@ class Zipper {
    * @param {number} crc
    * @returns {Uint8Array}
    * @memberof Zipper
-   * @private
    */
   generateCentralDirectoryFileHeader(entry, relativeOffset, crc) {
     const useZip64 = entry.size > 0xffffffff || relativeOffset > 0xffffffff;
@@ -241,11 +231,13 @@ class Zipper {
   }
 
   /**
+   * @param {number} queueSize
+   * @param {number} centralDirStartOffset
+   * @param {number} centralDirSize
    * @returns {Uint8Array}
    * @memberof Zipper
-   * @private
    */
-  generateZip64EndOfCentralDirectoryRecord() {
+  generateZip64EndOfCentralDirectoryRecord(queueSize, centralDirStartOffset, centralDirSize) {
     return new Uint8Array([
       // ZIP64 end of central directory signature = 0x06064b50 ("PK\6\6")
       0x50, 0x4b, 0x06, 0x06,
@@ -260,43 +252,46 @@ class Zipper {
       // Disk where ZIP64 end of central directory starts = 0
       0x00, 0x00, 0x00, 0x00,
       // Number of central directory records on this disk
-      ...this.encodeNumber(this.queue.length, 8),
+      ...this.encodeNumber(queueSize, 8),
       // Total number of central directory records
-      ...this.encodeNumber(this.queue.length, 8),
+      ...this.encodeNumber(queueSize, 8),
       // Size of central directory (bytes)
-      ...this.encodeNumber(this.centralDirSize, 8),
+      ...this.encodeNumber(centralDirSize, 8),
       // Offset of start of central directory, relative to start of archive
-      ...this.encodeNumber(this.centralDirStartOffset, 8),
+      ...this.encodeNumber(centralDirStartOffset, 8),
       // ZIP64 extensible data sector
       ...[],
     ]);
   }
 
   /**
+   * @param {number} centralDirStartOffset
+   * @param {number} centralDirSize
    * @returns {Uint8Array}
    * @memberof Zipper
-   * @private
    */
-  generateZip64EndOfCentralDirectoryLocator() {
+  generateZip64EndOfCentralDirectoryLocator(centralDirStartOffset, centralDirSize) {
     return new Uint8Array([
       // ZIP64 end of central directory locator signature = 0x07064b50 ("PK\6\7")
       0x50, 0x4b, 0x06, 0x07,
       // Disk where ZIP64 end of central directory starts = 0
       0x00, 0x00, 0x00, 0x00,
       // Offset of ZIP64 end of central directory record
-      ...this.encodeNumber(this.centralDirStartOffset + this.centralDirSize, 8),
+      ...this.encodeNumber(centralDirStartOffset + centralDirSize, 8),
       // Total number of disks = 1
       0x01, 0x00, 0x00, 0x00
     ]);
   }
 
   /**
+   * @param {number} queueSize
+   * @param {number} centralDirStartOffset
+   * @param {number} centralDirSize
    * @param {boolean} [useZip64=false]
    * @returns {Uint8Array}
    * @memberof Zipper
-   * @private
    */
-  generateEndOfCentralDirectoryRecord(useZip64 = false) {
+  generateEndOfCentralDirectoryRecord(queueSize, centralDirStartOffset, centralDirSize, useZip64 = false) {
     return new Uint8Array([
       // End of central directory signature = 0x06054b50 ("PK\5\6")
       0x50, 0x4b, 0x05, 0x06,
@@ -305,13 +300,13 @@ class Zipper {
       // Disk where central directory starts = 0
       0x00, 0x00,
       // Number of central directory records on this disk
-      ...this.encodeNumber(useZip64 ? 0xffff : this.queue.length, 2),
+      ...this.encodeNumber(useZip64 ? 0xffff : queueSize, 2),
       // Total number of central directory records
-      ...this.encodeNumber(useZip64 ? 0xffff : this.queue.length, 2),
+      ...this.encodeNumber(useZip64 ? 0xffff : queueSize, 2),
       // Size of central directory (bytes)
-      ...this.encodeNumber(useZip64 ? 0xffffffff : this.centralDirSize),
+      ...this.encodeNumber(useZip64 ? 0xffffffff : centralDirSize),
       // Offset of start of central directory, relative to start of archive
-      ...this.encodeNumber(useZip64 ? 0xffffffff : this.centralDirStartOffset),
+      ...this.encodeNumber(useZip64 ? 0xffffffff : centralDirStartOffset),
       // Comment length (n)
       0x00, 0x00,
       // Comment
@@ -325,7 +320,6 @@ class Zipper {
    * @yields {Uint8Array}
    * @returns {AsyncGenerator<Uint8Array>}
    * @memberof Zipper
-   * @private
    */
   async *generateZipData() {
     let useZip64Archive = this.queue.length > 0xffff
@@ -383,11 +377,11 @@ class Zipper {
     useZip64Archive = useZip64Archive || this.centralDirStartOffset > 0xffffffff || this.centralDirSize > 0xffffffff
 
     if (useZip64Archive) {
-      yield this.generateZip64EndOfCentralDirectoryRecord();
-      yield this.generateZip64EndOfCentralDirectoryLocator();
+      yield this.generateZip64EndOfCentralDirectoryRecord(this.queue.length, this.centralDirStartOffset, this.centralDirSize);
+      yield this.generateZip64EndOfCentralDirectoryLocator(this.centralDirStartOffset, this.centralDirSize);
     }
 
-    yield this.generateEndOfCentralDirectoryRecord(useZip64Archive);
+    yield this.generateEndOfCentralDirectoryRecord(this.queue.length, this.centralDirStartOffset, this.centralDirSize, useZip64Archive);
   }
 
   /**
