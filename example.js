@@ -11,7 +11,7 @@ const zip = new Zipper();
 zip
   .add({
     name: "empty.txt",
-    data: /** @type {ReadableStream<Uint8Array>} */(Readable.toWeb(createReadStream("./empty.txt"))),
+    data: new Blob([new Uint8Array(0)]).stream(),
     lastModified: new Date(0),
     size: 0,
   })
