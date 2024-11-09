@@ -13,6 +13,7 @@
     "stream"
   ],
   "scripts": {
+    "start": "node example.js",
     "build": "tsc -p .",
     "prepack": "npm run build",
     "test": "vitest --run",
