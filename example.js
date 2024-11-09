@@ -11,7 +11,7 @@ const zip = new Zipper();
 zip
   .add({
     name: "empty.txt",
-    data: Readable.toWeb(createReadStream("./empty.txt")),
+    data: new Blob([new Uint8Array(0)]).stream(),
     lastModified: new Date(0),
     size: 0,
   })
@@ -54,39 +54,15 @@ for (let i = 0; i < 0xFFFF; i++) {
   })
 }
 
-if (!process.env.CI) {
-  const largeFileStats = statSync("./large-file.bin")
-  zip.add({
-    name: "large-file.bin",
-    data: Readable.toWeb(createReadStream("./large-file.bin")),
-    lastModified: largeFileStats.mtime,
-    size: largeFileStats.size,
-  })
-}
-
 const licenseStats = statSync("./LICENSE")
 zip.add({
   name: "LICENSE",
-  data: Readable.toWeb(createReadStream("./LICENSE")),
+  data: /** @type {ReadableStream<Uint8Array>} */(Readable.toWeb(createReadStream("./LICENSE"))),
   lastModified: licenseStats.mtime,
   size: licenseStats.size,
 })
 
-if (!process.env.CI) {
-  const oneGBFileStats = statSync("./1gb-file.bin")
-  for (let i = 0; i < 4; i++) {
-    zip.add({
-      name: `1gb-file-${i}.bin`,
-      data: Readable.toWeb(createReadStream("./1gb-file.bin")),
-      lastModified: oneGBFileStats.mtime,
-      size: oneGBFileStats.size,
-    })
-  }
-}
-
-// Can be done before streaming the file
 const predictedSize = zip.predictSize();
-
 
 try {
   rmSync(OUTFILE, { force: true });
@@ -109,8 +85,5 @@ zip.stream()
     } else {
       console.error("😒 The zips final size does not match the prediction");
       console.error(`The difference between the two is ${predictedSize - actualSize} bytes`);
-    }
-    if (process.env.CI) {
-      try { rmSync(OUTFILE, { force: true }) } catch { }
     }
   });
