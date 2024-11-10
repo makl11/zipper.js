@@ -19,7 +19,8 @@ import {
 } from "./utils/binary/constants/versions.js";
 import { DIR, FILE } from "./utils/test_data.js";
 
-import Zipper, { ZipEntry } from "../index.js";
+import Zipper from "../index.js";
+import type { ZipFileStream } from "../index.js";
 
 describe("Binary Format", () => {
   let zipper: Zipper;
@@ -56,10 +57,7 @@ describe("Binary Format", () => {
     });
 
     it("should generate correct header structure for streamed file", () => {
-      const file = {
-        ...FILE,
-        data: new Blob([FILE.data]).stream(),
-      } satisfies ZipEntry;
+      const file = { ...FILE, data: new Blob([FILE.data]).stream() } satisfies ZipFileStream;
 
       const headerBuffer = zipper.generateLocalFileHeader(file);
       const header = new LocalFileHeader(headerBuffer.buffer);
@@ -99,10 +97,7 @@ describe("Binary Format", () => {
     });
 
     it("should handle nested directory paths", () => {
-      const dir = {
-        ...DIR,
-        path: "parent/child/grandchild/",
-      };
+      const dir = { ...DIR, path: "parent/child/grandchild/" };
 
       const headerBuffer = zipper.generateLocalFileHeader(dir);
       const header = new LocalFileHeader(headerBuffer.buffer);
@@ -117,10 +112,7 @@ describe("Binary Format", () => {
     });
 
     it("should handle ZIP64 when needed", () => {
-      const largeFile = {
-        ...FILE,
-        size: 0xFFFFFFFF,
-      };
+      const largeFile = { ...FILE, size: 0xFFFFFFFF };
 
       const headerBuffer = zipper.generateLocalFileHeader(largeFile);
       const header = new LocalFileHeader(headerBuffer.buffer);
@@ -142,7 +134,7 @@ describe("Binary Format", () => {
       // Should default to minimum DOS date (1980-01-01)
       const headerBuffer1 = zipper.generateLocalFileHeader({
         ...FILE,
-        lastModified: new Date(1970, 0, 1),
+        mTime: new Date(1970, 0, 1),
       });
       const header1 = new LocalFileHeader(headerBuffer1.buffer);
       expect(header1.lastModifiedDate).toBe(0x2100); // 1980-01-01
@@ -151,7 +143,7 @@ describe("Binary Format", () => {
       // Should cap at maximum DOS date (2107-12-31)
       const headerBuffer2 = zipper.generateLocalFileHeader({
         ...FILE,
-        lastModified: new Date(2108, 0, 1),
+        mTime: new Date(2108, 0, 1),
       });
       const header2 = new LocalFileHeader(headerBuffer2.buffer);
       expect(header2.lastModifiedDate).toBe(0xFF9F); // 2107-12-31
@@ -191,7 +183,7 @@ describe("Binary Format", () => {
   describe("Central Directory Header", () => {
     it("should generate correct central directory entry for files", () => {
       const fakeRelativeOffset = 0x1234;
-      const headerBuffer = zipper.generateCentralDirectoryFileHeader(
+      const headerBuffer = zipper.generateCentralDirectoryHeader(
         FILE,
         fakeRelativeOffset,
         FILE.crc,
@@ -226,7 +218,7 @@ describe("Binary Format", () => {
     it("should handle ZIP64 when needed", () => {
       const largeFile = { ...FILE, size: 0xFFFFFFFF };
 
-      const headerBuffer = zipper.generateCentralDirectoryFileHeader(
+      const headerBuffer = zipper.generateCentralDirectoryHeader(
         largeFile,
         0,
         0,
@@ -250,7 +242,7 @@ describe("Binary Format", () => {
     it("should handle UTF-8 filenames correctly", () => {
       const file = { ...FILE, path: "tést.txt" };
 
-      const headerBuffer = zipper.generateCentralDirectoryFileHeader(file, 0, 0);
+      const headerBuffer = zipper.generateCentralDirectoryHeader(file, 0, 0);
       const header = new CentralDirectoryHeader(headerBuffer.buffer);
 
       expect(header.signature).toBe(CentralDirectoryHeader.SIGNATURE);
@@ -307,10 +299,10 @@ describe("Binary Format", () => {
       // Add some entries to the queue
       for (let i = 0; i < totalEntries; i++) {
         zipper.queue.push({
+          _type:"file",
           name: `file${i}.txt`,
           data: new Uint8Array(1),
           size: 1,
-          lastModified: new Date(),
         });
       }
 

@@ -4,6 +4,7 @@ import { FILE } from "./utils/test_data.js";
 
 import Zipper from "../index.js";
 
+
 describe("Stream Handling", () => {
   let zipper: Zipper;
 
@@ -19,7 +20,7 @@ describe("Stream Handling", () => {
     });
 
     it("should stream data in chunks", async () => {
-      zipper.add(FILE);
+      zipper.add(FILE, FILE.data);
 
       const stream = zipper.stream();
       const chunks = await collectChunks(stream);
@@ -28,7 +29,7 @@ describe("Stream Handling", () => {
     });
 
     it.fails("should stop zip generation when an abort signal is received", async () => {
-      zipper.add(FILE);
+      zipper.add(FILE, FILE.data);
 
       const controller = new AbortController()
       const stream = zipper.stream({ signal: controller.signal });
@@ -47,7 +48,7 @@ describe("Stream Handling", () => {
         },
       });
 
-      zipper.add(FILE);
+      zipper.add(FILE, FILE.data);
       const stream = zipper.stream();
 
       await expect(stream.pipeTo(errorStream)).rejects.toThrow(
@@ -56,7 +57,7 @@ describe("Stream Handling", () => {
     });
 
     it("should handle output stream controller abort", async () => {
-      zipper.add(FILE);
+      zipper.add(FILE, FILE.data);
       const stream = zipper.stream();
 
       const abortController = new AbortController();
@@ -79,7 +80,7 @@ describe("Stream Handling", () => {
         },
       });
 
-      zipper.add({ ...FILE, data: errorStream });
+      zipper.add(FILE, errorStream, 10);
 
       const stream = zipper.stream();
       await expect(collectChunks(stream)).rejects.toThrow("Stream error");
@@ -92,7 +93,7 @@ describe("Stream Handling", () => {
         },
       });
 
-      zipper.add({ ...FILE, data: invalidStream });
+      zipper.add(FILE, invalidStream, 10);
 
       const stream = zipper.stream();
       await expect(collectChunks(stream)).rejects.toThrow();
@@ -109,7 +110,7 @@ describe("Stream Handling", () => {
         },
       });
 
-      zipper.add({ ...FILE, data: invalidStream });
+      zipper.add(FILE, invalidStream, 10);
 
       await expect(collectChunks(zipper.stream())).rejects.toThrow(
         /invalid input data/i,
@@ -117,7 +118,7 @@ describe("Stream Handling", () => {
     });
 
     it("should properly close streams when cancelled", async () => {
-      zipper.add(FILE);
+      zipper.add(FILE, FILE.data);
 
       const stream = zipper.stream();
       const reader = stream.getReader();

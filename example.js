@@ -9,58 +9,32 @@ const OUTFILE = "./out.zip";
 const zip = new Zipper();
 
 zip
-  .add({
-    name: "empty.txt",
-    data: new Blob([new Uint8Array(0)]).stream(),
-    lastModified: new Date(0),
-    size: 0,
-  })
-  .add({
-    name: "empty_buf.txt",
-    data: new Uint8Array(0),
-    lastModified: new Date(0),
-    size: 0,
-  });
+  .add({ name: "empty.txt" }, new Blob([new Uint8Array(0)]).stream(), 0)
+  .add({ name: "empty_buf.txt" }, new Uint8Array(0));
 
 const textEncoder = new TextEncoder()
 
 const text = textEncoder.encode(
   "You should be able to open this text file inside the zip!"
 );
-zip.add({
-  name: "this is a test.txt",
-  data: text,
-  lastModified: new Date(0),
-  size: text.byteLength,
-});
+zip.add({ name: "this is a test.txt" }, text);
 
 const moreText = new Blob([
   "Here is some more text in another location"
 ]);
-zip.add({
-  name: "this/is/another/test.txt",
-  data: moreText.stream(),
-  lastModified: new Date(0),
-  size: moreText.size,
-});
+zip.add({ name: "this/is/another/test.txt" }, moreText.stream(), moreText.size);
 
 for (let i = 0; i < 0xFFFF; i++) {
   const textBuf = textEncoder.encode(`This is test file number ${i}`)
-  zip.add({
-    name: `/many/test-${i}.txt`,
-    data: textBuf,
-    lastModified: new Date(0),
-    size: textBuf.byteLength,
-  })
+  zip.add({ name: `/many/test-${i}.txt` }, textBuf)
 }
 
 const licenseStats = statSync("./LICENSE")
-zip.add({
-  name: "LICENSE",
-  data: /** @type {ReadableStream<Uint8Array>} */(Readable.toWeb(createReadStream("./LICENSE"))),
-  lastModified: licenseStats.mtime,
-  size: licenseStats.size,
-})
+zip.add(
+  { name: "LICENSE", mTime: licenseStats.mtime },
+  /** @type {ReadableStream<Uint8Array>} */(Readable.toWeb(createReadStream("./LICENSE"))),
+  licenseStats.size,
+)
 
 const predictedSize = zip.predictSize();
 

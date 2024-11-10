@@ -45,7 +45,7 @@ describe.skip("HTTP Range Request Support", () => {
         0x07,
         0x08,
       ]);
-      zipper.add({ ...FILE, data: content, size: content.byteLength });
+      zipper.add(FILE, content);
 
       const range1 = await collectChunks(zipper.stream(0, 3)).then(
         concatUint8Arrays,
@@ -65,8 +65,8 @@ describe.skip("HTTP Range Request Support", () => {
   // Edge cases
   describe("Boundary Conditions", () => {
     it("should handle range requests crossing file boundaries", async () => {
-      zipper.add({ ...FILE, data: new Uint8Array(100).fill(65), size: 100 });
-      zipper.add({ ...FILE, data: new Uint8Array(100).fill(66), size: 100 });
+      zipper.add(FILE, new Uint8Array(100).fill(65));
+      zipper.add(FILE, new Uint8Array(100).fill(66));
 
       const stream = zipper.stream();
       const fullBuffer = await collectChunks(stream);
@@ -78,7 +78,7 @@ describe.skip("HTTP Range Request Support", () => {
     });
 
     it("should handle range requests spanning central directory", async () => {
-      zipper.add({ ...FILE, data: new Uint8Array(100), size: 100 });
+      zipper.add(FILE, new Uint8Array(100));
       const totalSize = zipper.predictSize();
 
       const rangeStream = zipper.stream(totalSize - 50, totalSize - 1);
@@ -91,7 +91,7 @@ describe.skip("HTTP Range Request Support", () => {
     });
 
     it("should handle range requests at structure boundaries", async () => {
-      zipper.add({ ...FILE, data: new Uint8Array(1000), size: 1000 });
+      zipper.add(FILE, new Uint8Array(1000));
 
       const totalSize = zipper.predictSize();
       const ranges = [
@@ -111,7 +111,7 @@ describe.skip("HTTP Range Request Support", () => {
   // Error handling
   describe("Error Cases", () => {
     it("should validate range request parameters", () => {
-      zipper.add({ ...FILE, data: new Uint8Array(100), size: 100 });
+      zipper.add(FILE, new Uint8Array(100));
       const totalSize = zipper.predictSize();
 
       expect(() => zipper.stream(-1, 50)).toThrow();
@@ -120,7 +120,7 @@ describe.skip("HTTP Range Request Support", () => {
     });
 
     it("should handle aborted range requests", async () => {
-      zipper.add({ ...FILE, data: new Uint8Array(1000), size: 1000 });
+      zipper.add(FILE, new Uint8Array(1000));
 
       const controller = new AbortController();
       const rangeStream = zipper.stream(0, 999, controller.signal);
@@ -135,7 +135,7 @@ describe.skip("HTTP Range Request Support", () => {
   // Concurrent operations
   describe("Concurrency", () => {
     it("should support concurrent range requests", async () => {
-      zipper.add({ ...FILE, data: new Uint8Array(1000), size: 1000 });
+      zipper.add(FILE, new Uint8Array(1000));
 
       const ranges = [
         { start: 0, end: 99 },
@@ -158,7 +158,7 @@ describe.skip("HTTP Range Request Support", () => {
     });
 
     it("should handle rapid creation and cancellation of range streams", async () => {
-      zipper.add({ ...FILE, data: new Uint8Array(1000000), size: 1000000 });
+      zipper.add(FILE, new Uint8Array(1000000));
 
       const streams: ReadableStream[] = [];
       const controllers: AbortController[] = [];

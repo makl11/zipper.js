@@ -6,31 +6,24 @@ import Zipper from "../index.js";
 
 describe("Basic Functionality", () => {
   let zipper: Zipper;
-  let stream: ReadableStream<Uint8Array>;
+  let stream: ReadableStream<Uint8Array> | undefined;
 
   beforeEach(() => {
     zipper = new Zipper();
+    stream = undefined
   });
 
   describe("Basic ZIP Operations", () => {
     it("should correctly pack a single small file", async () => {
-      expect(() => {
-        zipper.add({ name: FILE.name, data: FILE.data, size: FILE.size, lastModified: FILE.lastModified });
-      }).not.toThrow();
-      expect(() => {
-        stream = zipper.stream();
-      }).not.toThrow();
-      await expect(collectChunks(stream)).resolves.not.toThrow();
+      expect(() => { zipper.add(FILE, FILE.data) }).not.toThrow();
+      expect(() => { stream = zipper.stream() }).not.toThrow();
+      await expect(collectChunks(stream!)).resolves.not.toThrow();
     });
 
     it("should create directory entries", async () => {
-      expect(() => {
-        zipper.add({ ...DIR, name: DIR.name });
-      }).not.toThrow();
-      expect(() => {
-        stream = zipper.stream();
-      }).not.toThrow();
-      await expect(collectChunks(stream)).resolves.not.toThrow();
+      expect(() => { zipper.add(DIR) }).not.toThrow();
+      expect(() => { stream = zipper.stream() }).not.toThrow();
+      await expect(collectChunks(stream!)).resolves.not.toThrow();
     });
 
     it("should handle nested empty directory structure", async () => {
@@ -40,7 +33,7 @@ describe("Basic Functionality", () => {
       expect(() => {
         stream = zipper.stream();
       }).not.toThrow();
-      await expect(collectChunks(stream)).resolves.not.toThrow();
+      await expect(collectChunks(stream!)).resolves.not.toThrow();
     });
 
     it("should handle nested directory structure with files", async () => {
@@ -50,18 +43,18 @@ describe("Basic Functionality", () => {
       expect(() => {
         stream = zipper.stream();
       }).not.toThrow();
-      await expect(collectChunks(stream)).resolves.not.toThrow();
+      await expect(collectChunks(stream!)).resolves.not.toThrow();
     });
 
     it("should handle adding files to existing empty directory entries", async () => {
       expect(() => {
         zipper.add(DIR);
-        zipper.add({ ...FILE, name: DIR.name + FILE.name });
+        zipper.add({ ...FILE, name: DIR.name + FILE.name }, FILE.data);
       }).not.toThrow();
       expect(() => {
         stream = zipper.stream();
       }).not.toThrow();
-      await expect(collectChunks(stream)).resolves.not.toThrow();
+      await expect(collectChunks(stream!)).resolves.not.toThrow();
     });
   });
 });

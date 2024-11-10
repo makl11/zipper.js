@@ -14,10 +14,10 @@ describe("Size Prediction", { sequential: true }, () => {
   it("should update predicted size when adding new files", async () => {
     const initialSize = zipper.predictSize();
 
-    zipper.add(FILE);
+    zipper.add(FILE, FILE.data);
     const sizeAfterOneFile = zipper.predictSize();
 
-    zipper.add({ ...FILE, name: FILE.name + "2" });
+    zipper.add({ ...FILE, name: FILE.name + "2" }, FILE.data);
     const sizeAfterTwoFiles = zipper.predictSize();
 
     expect(sizeAfterOneFile).toBeGreaterThan(initialSize);
@@ -34,7 +34,7 @@ describe("Size Prediction", { sequential: true }, () => {
   });
 
   it("should accurately predict final ZIP size for a single file", async () => {
-    zipper.add(FILE);
+    zipper.add(FILE, FILE.data);
 
     const predictedSize = zipper.predictSize();
     const stream = zipper.stream();
@@ -48,7 +48,7 @@ describe("Size Prediction", { sequential: true }, () => {
   });
 
   it("should accurately predict final ZIP size for a single streamed file", async () => {
-    zipper.add({ ...FILE, data: new Blob([FILE.data]).stream() });
+    zipper.add(FILE, new Blob([FILE.data]).stream(), FILE.size);
 
     const predictedSize = zipper.predictSize();
 
@@ -67,18 +67,15 @@ describe("Size Prediction", { sequential: true }, () => {
   });
 
   it("should accurately predict final ZIP size for file and directory entries", async () => {
-    zipper.add(FILE);
+    zipper.add(FILE, FILE.data);
     zipper.add(DIR);
-    zipper.add({ ...FILE, name: DIR.name + FILE.name });
+    zipper.add({ ...FILE, name: DIR.name + FILE.name }, FILE.data);
 
     const predictedSize = zipper.predictSize();
     const stream = zipper.stream();
 
     const chunks = await collectChunks(stream);
-    const totalChunksSize = chunks.reduce(
-      (acc, chunk) => acc + chunk.byteLength,
-      0,
-    );
+    const totalChunksSize = chunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
     expect(totalChunksSize).toBe(predictedSize);
   });
 
@@ -87,7 +84,7 @@ describe("Size Prediction", { sequential: true }, () => {
   }, async () => {
     const content = new Uint8Array(4 * 1024 * 1024 * 1024 + 16);
     const contentSize = content.byteLength;
-    zipper.add({ ...FILE, data: new Blob([content]).stream(), size: contentSize });
+    zipper.add(FILE, new Blob([content]).stream(), contentSize);
 
     const predictedSize = zipper.predictSize();
     const stream = zipper.stream();
