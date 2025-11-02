@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { collectChunks, concatUint8Arrays } from "./utils/test_utils.js";
 import { FILE } from "./utils/test_data.js";
 
-import Zipper from "../index.js";
+import Zipper from "../src/index.js";
 
 describe.skip("HTTP Range Request Support", () => {
   let zipper: Zipper;

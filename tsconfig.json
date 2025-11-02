@@ -1,19 +1,22 @@
 {
-	"include": ["./*.js"],
-	"compilerOptions": {
-		"outDir": "dist",
-		"allowJs": true,
-		"declaration": true,
-		"emitDeclarationOnly": true,
-		"declarationMap": true,
-		"checkJs": true,
-		"strict": true,
-		"isolatedModules": true,
-		"esModuleInterop": true,
-		"skipLibCheck": true,
-		"target": "ES2022",
-		"module": "Node16",
-		"lib": ["ESNext", "DOM"],
-		"moduleResolution": "Node16"
-	}
+  "compilerOptions": {
+    "target": "esnext",
+    "lib": ["es2023", "dom"],
+    "moduleDetection": "force",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "strict": true,
+    "noUnusedLocals": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "declarationMap": true,
+    "allowJs": true
+  },
+  "include": ["src"]
 }

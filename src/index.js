@@ -9,6 +9,10 @@ import { crc32 } from "crc";
  * The name must not contain a drive or device letter, or a leading slash.
  * @property {Date} [mTime]
  * The last modified date of the file.
+ * @property {number} [mode]
+ * The files/directories permissions in POSIX octal notation e.g. `0oe644`/`0oe755`
+ * @property {boolean} [readonly = false]
+ * Whether the file or directory is readonly
  * @export
  */
 
@@ -171,7 +175,7 @@ class Zipper {
   }
 
   /**
-   * @param {_ZipEntry} entry
+   * @param {ZipEntry} entry
    * @param {number} relativeOffset
    * @param {number} crc
    * @returns {Uint8Array}

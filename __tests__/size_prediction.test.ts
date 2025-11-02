@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { collectChunks, writeChunksToFile } from "./utils/test_utils.js";
 import { DIR, FILE } from "./utils/test_data.js";
 
-import Zipper from "../index.js";
+import Zipper from "../src/index.js";
 
 describe("Size Prediction", { sequential: true }, () => {
   let zipper: Zipper;

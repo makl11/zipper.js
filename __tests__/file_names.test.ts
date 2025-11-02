@@ -3,7 +3,7 @@ import { collectChunks, concatUint8Arrays } from "./utils/test_utils.js";
 import { LocalFileHeader } from "./utils/binary/LocalFileHeader.js";
 import { decodeBitFlags } from "./utils/binary/constants/bitflags.js";
 
-import Zipper from "../index.js";
+import Zipper from "../src/index.js";
 
 describe("Path Handling", () => {
   let zipper: Zipper;

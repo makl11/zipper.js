@@ -1,5 +1,5 @@
 import crc32 from "crc/crc32";
-import type { _ZipEntry, ZipFileBuffer } from "../../index.js";
+import type { _ZipEntry } from "../../src/index.js";
 
 /** This file is 128KB */
 export const FILE = {
@@ -10,7 +10,7 @@ export const FILE = {
   get data() { return new Uint8Array(128 * 1024).fill(65) },
   size: 128 * 1024,
 
-  crc: crc32(new Uint8Array(128 * 1024).fill(65)),
+  crc: crc32(new Uint8Array(128 * 1024).fill(65).buffer),
 } as const satisfies _ZipEntry & { crc: number };
 
 /** This file is >4GB to test ZIP 64 */
@@ -22,7 +22,7 @@ export const LARGE_FILE = {
   get data() { return new Uint8Array(1024 * 1024 * 1024 * 4 + 16).fill(65) },
   size: 1024 * 1024 * 1024 * 4 + 16,
 
-  crc: crc32(new Uint8Array(1024 * 1024 * 1024 * 4 + 16).fill(65)),
+  crc: crc32(new Uint8Array(1024 * 1024 * 1024 * 4 + 16).fill(65).buffer),
 } as const satisfies _ZipEntry & { crc: number };
 
 export const DIR = {

@@ -3,7 +3,7 @@ import { DOS_ATTRS, UNIX_PERMISSIONS } from "./constants/externalAttrs.js";
 import { CENTRAL_DIRECTORY } from "./constants/offsets.js";
 import { ZIP_VERSION } from "./constants/versions.js";
 
-import type { ZipDir, ZipFile } from "../../../index.js";
+import type { ZipEntry } from "../../../src/index.js";
 
 const {
   SIGNATURE: SIGNATURE_OFFSET,
@@ -241,7 +241,7 @@ export class CentralDirectoryHeader extends DataView {
   }
 }
 
-export function generateExternalAttrs(entry: ZipFile | ZipDir): Uint8Array {
+export function generateExternalAttrs(entry: ZipEntry): Uint8Array {
   let unixMode: number = 0;
   let dosAttrs: number = 0;
 
