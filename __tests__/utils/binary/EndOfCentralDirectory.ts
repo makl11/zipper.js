@@ -12,7 +12,9 @@ const {
   COMMENT_START,
 } = END_OF_CENTRAL_DIR;
 
-export class EndOfCentralDirectory extends DataView {
+export class EndOfCentralDirectory<
+  BufType extends ArrayBufferLike = ArrayBufferLike,
+> extends DataView<BufType> {
   static readonly SIGNATURE = 0x06054b50;
   static readonly SIZE = 22;
 
@@ -23,7 +25,9 @@ export class EndOfCentralDirectory extends DataView {
     return new EndOfCentralDirectory(buffer);
   }
 
-  static find(buffer: ArrayBuffer): EndOfCentralDirectory {
+  static find<BufType extends ArrayBufferLike = ArrayBufferLike>(
+    buffer: BufType,
+  ): EndOfCentralDirectory<BufType> {
     // TODO: Implement using sliding window from the end of the buffer
     // Note: Since this implementation does not allow for comments, we can use a simple approach
     const eocd = new EndOfCentralDirectory(
@@ -36,7 +40,7 @@ export class EndOfCentralDirectory extends DataView {
     return eocd;
   }
 
-  constructor(buffer: ArrayBuffer, byteOffset: number = 0) {
+  constructor(buffer: BufType, byteOffset: number = 0) {
     super(buffer, byteOffset);
   }
 

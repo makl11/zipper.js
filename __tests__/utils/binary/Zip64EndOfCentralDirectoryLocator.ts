@@ -7,7 +7,9 @@ const {
   TOTAL_DISKS,
 } = ZIP64_END_OF_CENTRAL_DIR_LOCATOR;
 
-export class Zip64EndOfCentralDirectoryLocator extends DataView {
+export class Zip64EndOfCentralDirectoryLocator<
+  BufType extends ArrayBufferLike = ArrayBufferLike,
+> extends DataView<BufType> {
   static readonly SIGNATURE = 0x07064b50;
   static readonly SIZE = 20;
 
@@ -22,7 +24,7 @@ export class Zip64EndOfCentralDirectoryLocator extends DataView {
     return new Zip64EndOfCentralDirectoryLocator(buffer);
   }
 
-  constructor(buffer: ArrayBuffer, byteOffset: number = 0) {
+  constructor(buffer: BufType, byteOffset: number = 0) {
     super(buffer, byteOffset);
   }
 

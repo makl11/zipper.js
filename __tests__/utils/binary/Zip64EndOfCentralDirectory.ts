@@ -14,7 +14,9 @@ const {
   CD_OFFSET,
 } = ZIP64_END_OF_CENTRAL_DIR;
 
-export class Zip64EndOfCentralDirectory extends DataView {
+export class Zip64EndOfCentralDirectory<
+  BufType extends ArrayBufferLike = ArrayBufferLike,
+> extends DataView<BufType> {
   static readonly SIGNATURE = 0x06064b50;
   static readonly SIZE = 56;
 
@@ -29,7 +31,7 @@ export class Zip64EndOfCentralDirectory extends DataView {
     return new Zip64EndOfCentralDirectory(buffer);
   }
 
-  constructor(buffer: ArrayBuffer, byteOffset: number = 0) {
+  constructor(buffer: BufType, byteOffset: number = 0) {
     super(buffer, byteOffset);
   }
 

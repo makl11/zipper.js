@@ -7,7 +7,9 @@ const {
   UNCOMPRESSED_SIZE,
 } = DATA_DESCRIPTOR;
 
-export class DataDescriptor extends DataView {
+export class DataDescriptor<
+  BufType extends ArrayBufferLike = ArrayBufferLike,
+> extends DataView<BufType> {
   static readonly SIGNATURE = 0x08074b50;
   static readonly SIZE = 16;
   static readonly SIZE_ZIP64 = 24;
@@ -23,7 +25,7 @@ export class DataDescriptor extends DataView {
   }
 
   constructor(
-    buffer: ArrayBuffer,
+    buffer: BufType,
     byteOffset: number = 0,
     isZip64: boolean = false,
   ) {

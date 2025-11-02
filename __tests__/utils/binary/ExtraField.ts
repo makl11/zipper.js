@@ -1,10 +1,12 @@
 import { EXTRA_FIELD, ZIP64_EXTRA_FIELD } from "./constants/offsets.js";
 
-export class ExtraField extends Uint8Array {
+export class ExtraField<
+  BufType extends ArrayBufferLike = ArrayBufferLike,
+> extends Uint8Array<BufType> {
   static readonly SIZE: number = 4; // Size of fixed portion
   protected view: DataView;
 
-  constructor(buffer: ArrayBuffer, byteOffset: number) {
+  constructor(buffer: BufType, byteOffset: number) {
     const dataSize = new DataView(buffer, byteOffset).getUint16(
       EXTRA_FIELD.SIZE,
       true,
@@ -45,52 +47,35 @@ export class ExtraField extends Uint8Array {
     ).set(value);
   }
 
-  static isZip64(field: ExtraField): boolean {
+  static isZip64(this: void, field: ExtraField): field is Zip64ExtraField {
     return field.id === Zip64ExtraField.ID;
   }
 
-  static isUnixUidGid(field: ExtraField): boolean {
+  static isUnixUidGid(
+    this: void,
+    field: ExtraField,
+  ): field is UnixUidGidExtraField {
     return field.id === UnixUidGidExtraField.ID;
   }
 
-  static isUniversalTime(field: ExtraField): boolean {
+  static isUniversalTime(
+    this: void,
+    field: ExtraField,
+  ): field is UniversalTimeExtraField {
     return field.id === UniversalTimeExtraField.ID;
-  }
-
-  asZip64() {
-    if (!ExtraField.isZip64(this)) {
-      throw new Error("Can not interpret this ExtraField as Zip64ExtraField");
-    }
-    return new Zip64ExtraField(this.buffer, this.byteOffset);
-  }
-
-  asUnixUidGid() {
-    if (!ExtraField.isUnixUidGid(this)) {
-      throw new Error(
-        "Can not interpret this ExtraField as UnixUidGidExtraField",
-      );
-    }
-    return new UnixUidGidExtraField(this.buffer, this.byteOffset);
-  }
-
-  asUniversalTime() {
-    if (!ExtraField.isUniversalTime(this)) {
-      throw new Error(
-        "Can not interpret this ExtraField as UniversalTimeExtraField",
-      );
-    }
-    return new UniversalTimeExtraField(this.buffer, this.byteOffset);
   }
 }
 
 /** @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT#:~:text=4.5.3%20%2DZip64%20Extended%20Information%20Extra%20Field%20(0x0001) */
-export class Zip64ExtraField extends ExtraField {
+export class Zip64ExtraField<
+  BufType extends ArrayBufferLike = ArrayBufferLike,
+> extends ExtraField<BufType> {
   static readonly ID = 0x0001;
   static readonly DATA_SIZE_LFH = 16; // Local file header
   static readonly DATA_SIZE_CDH = 28; // Central directory header
   private readonly isLFH: boolean;
 
-  constructor(buffer: ArrayBuffer, byteOffset: number) {
+  constructor(buffer: BufType, byteOffset: number) {
     super(buffer, byteOffset);
     if (this.id !== Zip64ExtraField.ID) {
       throw new Error("Invalid ZIP64 extra field");
@@ -211,7 +196,9 @@ export class Zip64ExtraField extends ExtraField {
   }
 }
 
-class UniversalTimeExtraField extends ExtraField {
+class UniversalTimeExtraField<
+  BufType extends ArrayBufferLike = ArrayBufferLike,
+> extends ExtraField<BufType> {
   static readonly ID = 0x5455;
   static readonly FLAGS = {
     MTIME: 0x01,
@@ -219,7 +206,7 @@ class UniversalTimeExtraField extends ExtraField {
     CTIME: 0x04,
   } as const;
 
-  constructor(buffer: ArrayBuffer, byteOffset: number) {
+  constructor(buffer: BufType, byteOffset: number) {
     super(buffer, byteOffset);
     if (this.id !== UniversalTimeExtraField.ID) {
       throw new Error("Invalid Universal Time extra field");
@@ -323,10 +310,12 @@ class UniversalTimeExtraField extends ExtraField {
   }
 }
 
-class UnixUidGidExtraField extends ExtraField {
+class UnixUidGidExtraField<
+  BufType extends ArrayBufferLike = ArrayBufferLike,
+> extends ExtraField<BufType> {
   static readonly ID = 0x7875;
 
-  constructor(buffer: ArrayBuffer, byteOffset: number) {
+  constructor(buffer: BufType, byteOffset: number) {
     super(buffer, byteOffset);
     if (this.id !== UnixUidGidExtraField.ID) {
       throw new Error("Invalid Unix UID/GID extra field");

@@ -42,7 +42,7 @@ describe("Stream Handling", () => {
   // Error handling
   describe("Error Cases", () => {
     it("should handle output stream errors", async () => {
-      const errorStream = new WritableStream({
+      const errorStream = new WritableStream<Uint8Array>({
         write() {
           throw new Error("Stream controller error");
         },
@@ -74,7 +74,8 @@ describe("Stream Handling", () => {
     });
 
     it("should handle input stream errors", async () => {
-      const errorStream = new ReadableStream({
+      const errorStream = new ReadableStream<Uint8Array>({
+        type: "bytes",
         start(controller) {
           controller.error(new Error("Stream error"));
         },
@@ -88,8 +89,11 @@ describe("Stream Handling", () => {
 
     it("should handle invalid input stream data", async () => {
       const invalidStream = new ReadableStream({
+        type: "bytes",
         start(controller) {
-          controller.enqueue("invalid data");
+          controller.enqueue(
+            "invalid data" as unknown as Uint8Array<ArrayBuffer>,
+          );
         },
       });
 
@@ -102,10 +106,15 @@ describe("Stream Handling", () => {
     it("should handle interleaved invalid input stream data", async () => {
       let count = 0;
       const invalidStream = new ReadableStream({
+        type: "bytes",
         start(controller) {
           while (count++ < 10) {
             controller.enqueue(new Uint8Array([1]));
-            if (count === 5) controller.enqueue("invalid data");
+            if (count === 5) {
+              controller.enqueue(
+                "invalid data" as unknown as Uint8Array<ArrayBuffer>,
+              );
+            }
           }
         },
       });

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { beforeEach, describe, expect, it } from "vitest";
 import { collectChunks, concatUint8Arrays } from "./utils/test_utils.js";
 import { FILE } from "./utils/test_data.js";

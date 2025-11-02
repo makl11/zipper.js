@@ -97,7 +97,7 @@ describe("Binary Format", () => {
     });
 
     it("should handle nested directory paths", () => {
-      const dir = { ...DIR, path: "parent/child/grandchild/" };
+      const dir = { ...DIR, name: "parent/child/grandchild/" };
 
       const headerBuffer = zipper.generateLocalFileHeader(dir);
       const header = new LocalFileHeader(headerBuffer.buffer);
@@ -108,7 +108,7 @@ describe("Binary Format", () => {
 
       expect(header.versionNeeded).toBe(FEATURES_VERSION.DIRS);
 
-      expect(header.filename).toBe(dir.path);
+      expect(header.filename).toBe(dir.name);
     });
 
     it("should handle ZIP64 when needed", () => {
@@ -123,7 +123,7 @@ describe("Binary Format", () => {
         ExtraField.SIZE + Zip64ExtraField.DATA_SIZE_LFH,
       );
 
-      const zip64Field = header.extraFields.find(ExtraField.isZip64)?.asZip64();
+      const zip64Field = header.extraFields.find(ExtraField.isZip64);
       expect(zip64Field).toBeDefined();
       expect(zip64Field!.dataSize).toBe(Zip64ExtraField.DATA_SIZE_LFH);
       expect(zip64Field!.compressedSize).toBe(BigInt(largeFile.size));
@@ -184,7 +184,7 @@ describe("Binary Format", () => {
     it("should generate correct central directory entry for files", () => {
       const fakeRelativeOffset = 0x1234;
       const headerBuffer = zipper.generateCentralDirectoryHeader(
-        FILE,
+        { ...FILE, size: undefined },
         fakeRelativeOffset,
         FILE.crc,
       );
@@ -216,10 +216,8 @@ describe("Binary Format", () => {
     });
 
     it("should handle ZIP64 when needed", () => {
-      const largeFile = { ...FILE, size: 0xFFFFFFFF };
-
       const headerBuffer = zipper.generateCentralDirectoryHeader(
-        largeFile,
+        { ...LARGE_FILE, size: undefined },
         0,
         0,
       );
@@ -230,17 +228,17 @@ describe("Binary Format", () => {
       expect(header.compressedSize).toBe(0xffffffff);
       expect(header.uncompressedSize).toBe(0xffffffff);
 
-      const zip64Field = header.extraFields.find(ExtraField.isZip64)?.asZip64();
+      const zip64Field = header.extraFields.find(ExtraField.isZip64);
       expect(zip64Field).toBeDefined();
       expect(zip64Field!.dataSize).toBe(Zip64ExtraField.DATA_SIZE_CDH);
-      expect(zip64Field!.compressedSize).toBe(BigInt(largeFile.size));
-      expect(zip64Field!.uncompressedSize).toBe(BigInt(largeFile.size));
+      expect(zip64Field!.compressedSize).toBe(BigInt(LARGE_FILE.size));
+      expect(zip64Field!.uncompressedSize).toBe(BigInt(LARGE_FILE.size));
       expect(zip64Field!.diskStartNumber).toBe(0);
       expect(zip64Field!.relativeHeaderOffset).toBe(0n);
     });
 
     it("should handle UTF-8 filenames correctly", () => {
-      const file = { ...FILE, path: "tést.txt" };
+      const file = { ...FILE, name: "tést.txt", size: undefined };
 
       const headerBuffer = zipper.generateCentralDirectoryHeader(file, 0, 0);
       const header = new CentralDirectoryHeader(headerBuffer.buffer);

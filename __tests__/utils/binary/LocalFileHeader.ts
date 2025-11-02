@@ -17,7 +17,9 @@ const {
   FILE_NAME_START,
 } = LOCAL_FILE_HEADER;
 
-export class LocalFileHeader extends DataView {
+export class LocalFileHeader<
+  BufType extends ArrayBufferLike = ArrayBufferLike,
+> extends DataView<BufType> {
   static readonly SIGNATURE = 0x04034b50;
   static readonly SIZE = 30; // Size of the fixed portion
 
@@ -28,7 +30,7 @@ export class LocalFileHeader extends DataView {
     return new LocalFileHeader(buffer);
   }
 
-  constructor(buffer: ArrayBuffer, byteOffset: number = 0) {
+  constructor(buffer: BufType, byteOffset: number = 0) {
     super(buffer, byteOffset);
   }
 

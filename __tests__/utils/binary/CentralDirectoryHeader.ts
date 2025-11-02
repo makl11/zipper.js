@@ -26,7 +26,9 @@ const {
   FILE_NAME_START,
 } = CENTRAL_DIRECTORY;
 
-export class CentralDirectoryHeader extends DataView {
+export class CentralDirectoryHeader<
+  BufType extends ArrayBufferLike = ArrayBufferLike,
+> extends DataView<BufType> {
   static readonly SIGNATURE = 0x02014b50;
   static readonly SIZE = 46;
 
@@ -37,7 +39,7 @@ export class CentralDirectoryHeader extends DataView {
     return new CentralDirectoryHeader(buffer);
   }
 
-  constructor(buffer: ArrayBuffer, byteOffset: number = 0) {
+  constructor(buffer: BufType, byteOffset: number = 0) {
     super(buffer, byteOffset);
   }
 
