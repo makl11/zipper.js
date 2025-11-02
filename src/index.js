@@ -179,11 +179,11 @@ class Zipper {
   /**
    * @param {ZipEntry} entry
    * @param {number} relativeOffset
-   * @param {number} crc
+   * @param {number} [crc=0]
    * @returns {Uint8Array}
    * @memberof Zipper
    */
-  generateCentralDirectoryHeader(entry, relativeOffset, crc) {
+  generateCentralDirectoryHeader(entry, relativeOffset, crc = 0) {
     const size = entry._type === "file" ? entry.size : 0;
     const useZip64 = size > 0xffffffff || relativeOffset > 0xffffffff;
     // prettier-ignore
