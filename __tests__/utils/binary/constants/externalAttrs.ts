@@ -49,7 +49,7 @@ export const UNIX_TYPES = {
  * @see {@link https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT} Section 4.4.2.2
  * @enum {number}
  */
-// deno-fmt-ignore
+// prettier-ignore
 export const UNIX_PERMISSIONS = {
   USER_READ: 0o400, USER_WRITE: 0o200, USER_EXEC: 0o100,
   GROUP_READ: 0o040, GROUP_WRITE: 0o020, GROUP_EXEC: 0o010,

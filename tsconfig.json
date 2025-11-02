@@ -1,22 +1,21 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "lib": ["es2023", "dom"],
-    "moduleDetection": "force",
-    "module": "preserve",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "types": ["node"],
-    "strict": true,
-    "noUnusedLocals": true,
+    "allowJs": true,
     "declaration": true,
+    "declarationMap": true,
     "emitDeclarationOnly": true,
     "esModuleInterop": true,
     "isolatedModules": true,
-    "verbatimModuleSyntax": true,
+    "lib": ["es2023", "dom", "DOM.AsyncIterable"],
+    "module": "preserve",
+    "moduleDetection": "force",
+    "moduleResolution": "bundler",
+    "noUnusedLocals": true,
+    "resolveJsonModule": true,
     "skipLibCheck": true,
-    "declarationMap": true,
-    "allowJs": true
+    "strict": true,
+    "target": "esnext",
+    "verbatimModuleSyntax": true
   },
-  "include": ["src"]
+  "include": ["src", "__tests__"]
 }

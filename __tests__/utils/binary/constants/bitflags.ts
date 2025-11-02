@@ -99,10 +99,10 @@ export function encodeBitFlags(
   options: Partial<BitFlagOptions>,
 ): [lowByte: number, highByte: number] {
   const flags = (Object.entries(options) as [BitFlag, boolean][])
-    .filter(([_, isSet]) => isSet)
+    .filter(([, isSet]) => isSet)
     .reduce((result, [flag]) => result | BIT_FLAGS[flag], 0);
 
-  return [flags & 0xFF, (flags >> 8) & 0xFF];
+  return [flags & 0xff, (flags >> 8) & 0xff];
 }
 
 /**
@@ -118,7 +118,9 @@ export function decodeBitFlags(
   }
 
   return Object.fromEntries(
-    (Object.entries(BIT_FLAGS) as [BitFlag, number][])
-      .map(([flag, mask]) => [flag, (value & mask) === mask]),
+    (Object.entries(BIT_FLAGS) as [BitFlag, number][]).map(([flag, mask]) => [
+      flag,
+      (value & mask) === mask,
+    ]),
   ) as BitFlagOptions;
 }

@@ -85,9 +85,9 @@ class Zipper {
    * @memberof Zipper
    */
   dateToDOSTime(date) {
-    if (!date) return 0
+    if (!date) return 0;
 
-    const year = date.getUTCFullYear()
+    const year = date.getUTCFullYear();
 
     if (year < 1980) {
       return 2162688; // 1980-1-1 00:00:00
@@ -118,6 +118,7 @@ class Zipper {
   generateLocalFileHeader(entry, crc = 0) {
     const size = entry._type === "file" ? entry.size : 0;
     const useZip64 = size > 0xffffffff;
+    // prettier-ignore
     return new Uint8Array([
       // Local file header signature = 0x04034b50 ("PK\3\4")
       0x50, 0x4b, 0x03, 0x04,
@@ -162,6 +163,7 @@ class Zipper {
    * @memberof Zipper
    */
   generateDataDescriptor(crc, size) {
+    // prettier-ignore
     return new Uint8Array([
       // Data descriptor signature = 0x08074b50 ("PK\7\8")
       0x50, 0x4b, 0x07, 0x08,
@@ -184,6 +186,7 @@ class Zipper {
   generateCentralDirectoryHeader(entry, relativeOffset, crc) {
     const size = entry._type === "file" ? entry.size : 0;
     const useZip64 = size > 0xffffffff || relativeOffset > 0xffffffff;
+    // prettier-ignore
     return new Uint8Array([
       // Central directory file header signature = 0x02014b50 ("PK\1\2")
       0x50, 0x4b, 0x01, 0x02,
@@ -191,7 +194,7 @@ class Zipper {
       0x2d, 0xFF,
       // Version needed to extract (minimum) = 0x14 -> 2.0 or 0x2d -> 4.5 for ZIP64
       (useZip64 ? 0x2d : 0x14), 0x00,
-      // General purpose bit flag 
+      // General purpose bit flag
       // TODO: Set Bit 11 to use UTF-8 Filenames
       (entry.data instanceof ReadableStream ? 0x08 : 0x00), 0x00,
       // Compression method = 0 -> None / STORE
@@ -245,7 +248,12 @@ class Zipper {
    * @returns {Uint8Array}
    * @memberof Zipper
    */
-  generateZip64EndOfCentralDirectoryRecord(queueSize, centralDirOffset, centralDirSize) {
+  generateZip64EndOfCentralDirectoryRecord(
+    queueSize,
+    centralDirOffset,
+    centralDirSize,
+  ) {
+    // prettier-ignore
     return new Uint8Array([
       // ZIP64 end of central directory signature = 0x06064b50 ("PK\6\6")
       0x50, 0x4b, 0x06, 0x06,
@@ -279,6 +287,7 @@ class Zipper {
    * @memberof Zipper
    */
   generateZip64EndOfCentralDirectoryLocator(centralDirOffset, centralDirSize) {
+    // prettier-ignore
     return new Uint8Array([
       // ZIP64 end of central directory locator signature = 0x07064b50 ("PK\6\7")
       0x50, 0x4b, 0x06, 0x07,
@@ -299,7 +308,13 @@ class Zipper {
    * @returns {Uint8Array}
    * @memberof Zipper
    */
-  generateEndOfCentralDirectoryRecord(queueSize, centralDirOffset, centralDirSize, useZip64 = false) {
+  generateEndOfCentralDirectoryRecord(
+    queueSize,
+    centralDirOffset,
+    centralDirSize,
+    useZip64 = false,
+  ) {
+    // prettier-ignore
     return new Uint8Array([
       // End of central directory signature = 0x06054b50 ("PK\5\6")
       0x50, 0x4b, 0x05, 0x06,
@@ -330,16 +345,17 @@ class Zipper {
    * @memberof Zipper
    */
   async *generateZipData() {
-    let useZip64Archive = this.queue.length > 0xffff
+    let useZip64Archive = this.queue.length > 0xffff;
     /** @type {{[name: string]: number}} */
-    const relativeLFHeaderOffsets = {}
+    const relativeLFHeaderOffsets = {};
     /** @type {{[name: string]: number}} */
-    const crc32Cache = {}
+    const crc32Cache = {};
 
     for (const entry of this.queue) {
-      relativeLFHeaderOffsets[entry.name] = this.bytesWritten
+      relativeLFHeaderOffsets[entry.name] = this.bytesWritten;
       const size = entry._type === "file" ? entry.size : 0;
-      useZip64Archive = useZip64Archive || (entry._type === "file" && size > 0xffffffff)
+      useZip64Archive =
+        useZip64Archive || (entry._type === "file" && size > 0xffffffff);
 
       if (entry._type === "file" && entry.data instanceof ReadableStream) {
         const header = this.generateLocalFileHeader(entry);
@@ -353,14 +369,17 @@ class Zipper {
           size += chunk.byteLength;
           yield chunk;
         }
-        crc = crc ?? 0
+        crc = crc ?? 0;
         this.bytesWritten += size;
-        crc32Cache[entry.name] = crc
-        this.bytesWritten += (size > 0xffffffff ? 24 : 16); // size of data descriptor
+        crc32Cache[entry.name] = crc;
+        this.bytesWritten += size > 0xffffffff ? 24 : 16; // size of data descriptor
         yield this.generateDataDescriptor(crc, size);
       } else if (entry._type === "file" && entry.data instanceof Uint8Array) {
-        crc32Cache[entry.name] = crc32(entry.data)
-        const header = this.generateLocalFileHeader(entry, crc32Cache[entry.name]);
+        crc32Cache[entry.name] = crc32(entry.data);
+        const header = this.generateLocalFileHeader(
+          entry,
+          crc32Cache[entry.name],
+        );
         this.bytesWritten += header.byteLength;
         yield header;
         if (size > 0) {
@@ -368,7 +387,10 @@ class Zipper {
           yield entry.data;
         }
       } else {
-        const header = this.generateLocalFileHeader(entry, crc32Cache[entry.name]);
+        const header = this.generateLocalFileHeader(
+          entry,
+          crc32Cache[entry.name],
+        );
         this.bytesWritten += header.byteLength;
         yield header;
       }
@@ -376,7 +398,8 @@ class Zipper {
 
     this.centralDirStartOffset = this.bytesWritten;
     for (const entry of this.queue) {
-      useZip64Archive = useZip64Archive || relativeLFHeaderOffsets[entry.name] > 0xffffffff
+      useZip64Archive =
+        useZip64Archive || relativeLFHeaderOffsets[entry.name] > 0xffffffff;
       const cdfh = this.generateCentralDirectoryHeader(
         entry,
         relativeLFHeaderOffsets[entry.name],
@@ -387,14 +410,29 @@ class Zipper {
     }
     this.centralDirSize = this.bytesWritten - this.centralDirStartOffset;
 
-    useZip64Archive = useZip64Archive || this.centralDirStartOffset > 0xffffffff || this.centralDirSize > 0xffffffff
+    useZip64Archive =
+      useZip64Archive ||
+      this.centralDirStartOffset > 0xffffffff ||
+      this.centralDirSize > 0xffffffff;
 
     if (useZip64Archive) {
-      yield this.generateZip64EndOfCentralDirectoryRecord(this.queue.length, this.centralDirStartOffset, this.centralDirSize);
-      yield this.generateZip64EndOfCentralDirectoryLocator(this.centralDirStartOffset, this.centralDirSize);
+      yield this.generateZip64EndOfCentralDirectoryRecord(
+        this.queue.length,
+        this.centralDirStartOffset,
+        this.centralDirSize,
+      );
+      yield this.generateZip64EndOfCentralDirectoryLocator(
+        this.centralDirStartOffset,
+        this.centralDirSize,
+      );
     }
 
-    yield this.generateEndOfCentralDirectoryRecord(this.queue.length, this.centralDirStartOffset, this.centralDirSize, useZip64Archive);
+    yield this.generateEndOfCentralDirectoryRecord(
+      this.queue.length,
+      this.centralDirStartOffset,
+      this.centralDirSize,
+      useZip64Archive,
+    );
   }
 
   /**
@@ -433,28 +471,21 @@ class Zipper {
     if (name.endsWith("/")) {
       if (data) throw new Error("Directory cannot have data");
       if (size !== undefined) throw new Error("Directory cannot have size");
-      _type = "dir"
-      size = 0
-    }
-
-    else if (data === undefined) throw new Error("Data is required");
-
+      _type = "dir";
+      size = 0;
+    } else if (data === undefined) throw new Error("Data is required");
     else if (data instanceof Uint8Array) {
       if (size !== undefined) {
         throw new Error("Size is not allowed for Uint8Array data");
       }
-      _type = "file"
-      size = data.byteLength
-    }
-
-    else if (data instanceof ReadableStream) {
+      _type = "file";
+      size = data.byteLength;
+    } else if (data instanceof ReadableStream) {
       if (size === undefined) {
         throw new Error("Size is required for ReadableStream data");
       }
-      _type = "file"
-    }
-
-    else throw new Error("Data must be a Uint8Array or ReadableStream");
+      _type = "file";
+    } else throw new Error("Data must be a Uint8Array or ReadableStream");
 
     this.queue.push({
       _type,
@@ -476,24 +507,27 @@ class Zipper {
    */
   predictSize() {
     let isZip64 = this.queue.length > 0xffff;
-    const entriesTotalSize = this.queue.reduce((totalSize, { size, name, data }) => {
-      totalSize += 30 + name.length /* + comment.length */; // local file header
-      if (size > 0xffffffff) totalSize += 20; //  local file header zip64 extra field
-      if (data instanceof ReadableStream) {
-        totalSize += size > 0xffffffff ? 24 : 16; // data descriptor
-      }
-      totalSize += 46 + name.length /* + comment.length */; // central directory file header
-      totalSize += size; // file data
-      isZip64 = isZip64 || size > 0xffffffff || totalSize > 0xffffffff;
-      return totalSize;
-    }, 0);
+    const entriesTotalSize = this.queue.reduce(
+      (totalSize, { size, name, data }) => {
+        totalSize += 30 + name.length /* + comment.length */; // local file header
+        if (size > 0xffffffff) totalSize += 20; //  local file header zip64 extra field
+        if (data instanceof ReadableStream) {
+          totalSize += size > 0xffffffff ? 24 : 16; // data descriptor
+        }
+        totalSize += 46 + name.length /* + comment.length */; // central directory file header
+        totalSize += size; // file data
+        isZip64 = isZip64 || size > 0xffffffff || totalSize > 0xffffffff;
+        return totalSize;
+      },
+      0,
+    );
     return (
       // Note: This implementation has no way to add comments
       22 /* + comment length */ + // end of central directory record
       (isZip64 ? 56 : 0) + // zip64 end of central directory record
       (isZip64 ? 20 : 0) + // zip64 end of central directory locator
       entriesTotalSize
-    )
+    );
   }
 
   /**
@@ -502,17 +536,16 @@ class Zipper {
    * @return {ReadableStream<Uint8Array>}
    * @memberof Zipper
    */
-  stream() {
-    const generator = this.generateZipData()
+  stream({ signal } = {}) {
+    const generator = this.generateZipData();
     return new ReadableStream({
       type: "bytes",
-      start(controller) { },
       async pull(controller) {
         try {
-          const { value, done } = await generator.next()
-          if (done) controller.close()
+          const { value, done } = await generator.next();
+          if (done) controller.close();
           if (value) controller.enqueue(value);
-          else throw new Error("invalid chunk", { cause: value })
+          else throw new Error("invalid chunk", { cause: value });
         } catch (error) {
           controller.error(error);
           throw error;

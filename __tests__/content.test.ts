@@ -1,15 +1,18 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { collectChunks, concatUint8Arrays } from "./utils/test_utils.js";
-import { FEATURES_VERSION, ZIP_VERSION } from "./utils/binary/constants/versions.js";
 import {
-  DataDescriptor,
-  LocalFileHeader,
+  FEATURES_VERSION,
+  ZIP_VERSION,
+} from "./utils/binary/constants/versions.js";
+import {
   CentralDirectoryHeader,
+  DataDescriptor,
   EndOfCentralDirectory,
+  LocalFileHeader,
   Zip64EndOfCentralDirectory,
-  Zip64EndOfCentralDirectoryLocator
+  Zip64EndOfCentralDirectoryLocator,
 } from "./utils/binary/index.js";
 import { DIR, FILE, LARGE_FILE } from "./utils/test_data.js";
+import { collectChunks, concatUint8Arrays } from "./utils/test_utils.js";
 
 import Zipper from "../src/index.js";
 
@@ -25,10 +28,10 @@ describe("File Content", () => {
       expect(() => zipper.add(FILE, new Uint8Array(0))).not.toThrow();
 
       const streamPromise = collectChunks(zipper.stream()).then(
-          concatUint8Arrays,
-        );
+        concatUint8Arrays,
+      );
       await expect(streamPromise).resolves.not.toThrow();
-const stream = await streamPromise;
+      const stream = await streamPromise;
 
       const lfh = new LocalFileHeader(stream.buffer);
       expect(lfh.signature).toBe(LocalFileHeader.SIGNATURE);
@@ -49,8 +52,8 @@ const stream = await streamPromise;
       expect(() => zipper.add(FILE, FILE.data)).not.toThrow();
 
       const streamPromise = collectChunks(zipper.stream()).then(
-          concatUint8Arrays,
-        );
+        concatUint8Arrays,
+      );
       await expect(streamPromise).resolves.not.toThrow();
       const stream = await streamPromise;
 
@@ -76,11 +79,13 @@ const stream = await streamPromise;
     });
 
     it("should handle ReadableStream content", async () => {
-      expect(() => zipper.add(FILE, new Blob([FILE.data]).stream(), FILE.size)).not.toThrow();
+      expect(() =>
+        zipper.add(FILE, new Blob([FILE.data]).stream(), FILE.size),
+      ).not.toThrow();
 
       const streamPromise = collectChunks(zipper.stream()).then(
-          concatUint8Arrays,
-        );
+        concatUint8Arrays,
+      );
       await expect(streamPromise).resolves.not.toThrow();
       const stream = await streamPromise;
 
@@ -156,7 +161,9 @@ const stream = await streamPromise;
       expect(() => zipper.add(FILE, view1)).not.toThrow();
       // The views share an underlying buffer, so after adding the first file,
       // the buffer will be detached while generating the zip and cannot be reused.
-      expect(() => zipper.add({ ...FILE, name: FILE.name + "2" }, view2)).toThrow(/buffer/i);
+      expect(() =>
+        zipper.add({ ...FILE, name: FILE.name + "2" }, view2),
+      ).toThrow(/buffer/i);
     });
 
     it("should reject new entries when zip file is already being generated", () => {
@@ -199,7 +206,11 @@ const stream = await streamPromise;
     });
 
     it("should handle streamed content larger than 4GB with ZIP64", async () => {
-      zipper.add(LARGE_FILE, new Blob([LARGE_FILE.data]).stream(), LARGE_FILE.size);
+      zipper.add(
+        LARGE_FILE,
+        new Blob([LARGE_FILE.data]).stream(),
+        LARGE_FILE.size,
+      );
 
       const stream = await collectChunks(zipper.stream()).then(
         concatUint8Arrays,
@@ -264,10 +275,10 @@ const stream = await streamPromise;
         eocd = EndOfCentralDirectory.find(stream.buffer);
       }).not.toThrow();
       expect(eocd!.signature).toBe(EndOfCentralDirectory.SIGNATURE);
-      expect(eocd!.entriesOnDisk).toBe(0xFFFF);
-      expect(eocd!.totalEntries).toBe(0xFFFF);
-      expect(eocd!.centralDirectorySize).toBe(0xFFFFFFFF);
-      expect(eocd!.centralDirectoryOffset).toBe(0xFFFFFFFF);
+      expect(eocd!.entriesOnDisk).toBe(0xffff);
+      expect(eocd!.totalEntries).toBe(0xffff);
+      expect(eocd!.centralDirectorySize).toBe(0xffffffff);
+      expect(eocd!.centralDirectoryOffset).toBe(0xffffffff);
 
       const z64EocdLocator = new Zip64EndOfCentralDirectoryLocator(
         stream.buffer,

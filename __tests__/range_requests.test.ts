@@ -1,7 +1,8 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import { beforeEach, describe, expect, it } from "vitest";
-import { collectChunks, concatUint8Arrays } from "./utils/test_utils.js";
 import { FILE } from "./utils/test_data.js";
+import { collectChunks, concatUint8Arrays } from "./utils/test_utils.js";
 
 import Zipper from "../src/index.js";
 
@@ -37,14 +38,7 @@ describe.skip("HTTP Range Request Support", () => {
 
     it("should maintain consistent byte order across range requests", async () => {
       const content = new Uint8Array([
-        0x01,
-        0x02,
-        0x03,
-        0x04,
-        0x05,
-        0x06,
-        0x07,
-        0x08,
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
       ]);
       zipper.add(FILE, content);
 
@@ -145,7 +139,7 @@ describe.skip("HTTP Range Request Support", () => {
       ];
 
       const rangePromises = ranges.map((range) =>
-        collectChunks(zipper.stream(range.start, range.end))
+        collectChunks(zipper.stream(range.start, range.end)),
       );
 
       const rangeBuffers = await Promise.all(rangePromises);
@@ -176,10 +170,12 @@ describe.skip("HTTP Range Request Support", () => {
 
       controllers.forEach((controller) => controller.abort());
 
-      await Promise.all(streams.map((stream) => {
-        const reader = stream.getReader();
-        return expect(reader.closed).resolves.toBeUndefined();
-      }));
+      await Promise.all(
+        streams.map((stream) => {
+          const reader = stream.getReader();
+          return expect(reader.closed).resolves.toBeUndefined();
+        }),
+      );
     });
   });
 });

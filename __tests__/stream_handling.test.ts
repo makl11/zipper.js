@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { collectChunks } from "./utils/test_utils.js";
 import { FILE } from "./utils/test_data.js";
+import { collectChunks } from "./utils/test_utils.js";
 
 import Zipper from "../src/index.js";
-
 
 describe("Stream Handling", () => {
   let zipper: Zipper;
@@ -28,15 +27,17 @@ describe("Stream Handling", () => {
       expect(chunks.length).toBeGreaterThanOrEqual(FILE.size / (64 * 1024)); // 64KB is default chunk size for node fs streams
     });
 
-    it.fails("should stop zip generation when an abort signal is received", async () => {
-      zipper.add(FILE, FILE.data);
+    it.fails(
+      "should stop zip generation when an abort signal is received",
+      async () => {
+        zipper.add(FILE, FILE.data);
 
-      const controller = new AbortController()
-      const stream = zipper.stream({ signal: controller.signal });
-      setTimeout(() => controller.abort("User abort"), 100)
-      await expect(collectChunks(stream)).rejects.toThrow(/user abort/i);
-
-    })
+        const controller = new AbortController();
+        const stream = zipper.stream({ signal: controller.signal });
+        setTimeout(() => controller.abort("User abort"), 100);
+        await expect(collectChunks(stream)).rejects.toThrow(/user abort/i);
+      },
+    );
   });
 
   // Error handling
@@ -63,7 +64,7 @@ describe("Stream Handling", () => {
       const abortController = new AbortController();
       const promise = stream.pipeTo(
         new WritableStream({
-          async write(chunk) {
+          async write() {
             return new Promise((resolve) => setTimeout(resolve, 50));
           },
         }),

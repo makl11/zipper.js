@@ -1,5 +1,5 @@
-import { FEATURES_VERSION, ZIP_VERSION } from "./constants/versions.js";
 import { LOCAL_FILE_HEADER } from "./constants/offsets.js";
+import { ZIP_VERSION } from "./constants/versions.js";
 import { ExtraField } from "./ExtraField.js";
 
 const {
@@ -122,10 +122,7 @@ export class LocalFileHeader<
 
   set filename(value: string) {
     const bytes = new TextEncoder().encode(value);
-    const view = new Uint8Array(
-      this.buffer,
-      this.byteOffset + FILE_NAME_START,
-    );
+    const view = new Uint8Array(this.buffer, this.byteOffset + FILE_NAME_START);
     view.set(bytes);
     this.filenameLength = bytes.byteLength;
   }
@@ -145,8 +142,8 @@ export class LocalFileHeader<
   }
 
   setExtraFields(fields: ExtraField[], updateLength: boolean = false) {
-    const targetOffset = this.byteOffset + FILE_NAME_START +
-      this.filenameLength;
+    const targetOffset =
+      this.byteOffset + FILE_NAME_START + this.filenameLength;
     let totalLength = 0;
 
     for (const field of fields) {

@@ -1,5 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  decodeBitFlags,
+  encodeBitFlags,
+} from "./utils/binary/constants/bitflags.js";
+import {
+  FEATURES_VERSION,
+  ZIP_VERSION,
+} from "./utils/binary/constants/versions.js";
+import {
   CentralDirectoryHeader,
   DataDescriptor,
   EndOfCentralDirectory,
@@ -9,18 +17,10 @@ import {
   Zip64EndOfCentralDirectoryLocator,
   Zip64ExtraField,
 } from "./utils/binary/index.js";
-import {
-  decodeBitFlags,
-  encodeBitFlags,
-} from "./utils/binary/constants/bitflags.js";
-import {
-  FEATURES_VERSION,
-  ZIP_VERSION,
-} from "./utils/binary/constants/versions.js";
-import { DIR, FILE } from "./utils/test_data.js";
+import { DIR, FILE, LARGE_FILE } from "./utils/test_data.js";
 
-import Zipper from "../src/index.js";
 import type { ZipFileStream } from "../src/index.js";
+import Zipper from "../src/index.js";
 
 describe("Binary Format", () => {
   let zipper: Zipper;
@@ -31,10 +31,7 @@ describe("Binary Format", () => {
 
   describe("Local File Header", () => {
     it("should generate correct header structure for basic file", () => {
-      const headerBuffer = zipper.generateLocalFileHeader(
-        FILE,
-        FILE.crc,
-      );
+      const headerBuffer = zipper.generateLocalFileHeader(FILE, FILE.crc);
       const header = new LocalFileHeader(headerBuffer.buffer);
 
       // Verify every field in the header
@@ -57,7 +54,10 @@ describe("Binary Format", () => {
     });
 
     it("should generate correct header structure for streamed file", () => {
-      const file = { ...FILE, data: new Blob([FILE.data]).stream() } satisfies ZipFileStream;
+      const file = {
+        ...FILE,
+        data: new Blob([FILE.data]).stream(),
+      } satisfies ZipFileStream;
 
       const headerBuffer = zipper.generateLocalFileHeader(file);
       const header = new LocalFileHeader(headerBuffer.buffer);
@@ -112,7 +112,10 @@ describe("Binary Format", () => {
     });
 
     it("should handle ZIP64 when needed", () => {
-      const largeFile = { ...FILE, size: 0xFFFFFFFF };
+      const largeFile = {
+        ...FILE,
+        size: 0xffffffff,
+      };
 
       const headerBuffer = zipper.generateLocalFileHeader(largeFile);
       const header = new LocalFileHeader(headerBuffer.buffer);
@@ -146,8 +149,8 @@ describe("Binary Format", () => {
         mTime: new Date(2108, 0, 1),
       });
       const header2 = new LocalFileHeader(headerBuffer2.buffer);
-      expect(header2.lastModifiedDate).toBe(0xFF9F); // 2107-12-31
-      expect(header2.lastModifiedTime).toBe(0xBF7D); // 23:59:58
+      expect(header2.lastModifiedDate).toBe(0xff9f); // 2107-12-31
+      expect(header2.lastModifiedTime).toBe(0xbf7d); // 23:59:58
     });
   });
 
@@ -167,7 +170,7 @@ describe("Binary Format", () => {
     it("should generate correct ZIP64 data descriptor for streamed files larger than 4GB", () => {
       const headerBuffer = zipper.generateDataDescriptor(
         FILE.crc,
-        0xFFFFFFFF + 0xFF,
+        0xffffffff + 0xff,
       );
       const header = new DataDescriptor(headerBuffer.buffer, 0, true);
 
@@ -175,8 +178,8 @@ describe("Binary Format", () => {
       expect(header.signature).toBe(DataDescriptor.SIGNATURE);
       expect(header.byteLength).toBe(DataDescriptor.SIZE_ZIP64);
       expect(header.crc32).toBe(FILE.crc);
-      expect(header.compressedSize).toBe(BigInt(0xFFFFFFFF + 0xFF));
-      expect(header.uncompressedSize).toBe(BigInt(0xFFFFFFFF + 0xFF));
+      expect(header.compressedSize).toBe(BigInt(0xffffffff + 0xff));
+      expect(header.uncompressedSize).toBe(BigInt(0xffffffff + 0xff));
     });
   });
 
@@ -205,7 +208,7 @@ describe("Binary Format", () => {
       expect(header.commentLength).toBe(0);
       expect(header.diskNumberStart).toBe(0);
       expect(header.internalAttributes).toBe(0);
-      const dosAttributes = header.externalAttributes & 0xFF;
+      const dosAttributes = header.externalAttributes & 0xff;
       const unixPermissions = (header.externalAttributes >> 16) & 0o777;
       expect(dosAttributes & 0x20).toBe(0x20); // Archive flag
       expect(unixPermissions).toBe(0o644); // rw-r--r--
@@ -297,7 +300,7 @@ describe("Binary Format", () => {
       // Add some entries to the queue
       for (let i = 0; i < totalEntries; i++) {
         zipper.queue.push({
-          _type:"file",
+          _type: "file",
           name: `file${i}.txt`,
           data: new Uint8Array(1),
           size: 1,
@@ -330,10 +333,12 @@ describe("Binary Format", () => {
     });
 
     it("should encode multiple flags correctly", () => {
-      expect(encodeBitFlags({
-        UTF8: true,
-        DATA_DESCRIPTOR: true,
-      })).toEqual([0x08, 0x08]);
+      expect(
+        encodeBitFlags({
+          UTF8: true,
+          DATA_DESCRIPTOR: true,
+        }),
+      ).toEqual([0x08, 0x08]);
     });
 
     it("should decode flags bytes correctly", () => {

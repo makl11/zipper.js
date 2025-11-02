@@ -7,7 +7,9 @@ export const FILE = {
   name: "test.txt",
   mTime: new Date(2024, 0, 1, 12, 0, 0),
 
-  get data() { return new Uint8Array(128 * 1024).fill(65) },
+  get data() {
+    return new Uint8Array(128 * 1024).fill(65);
+  },
   size: 128 * 1024,
 
   crc: crc32(new Uint8Array(128 * 1024).fill(65).buffer),
@@ -19,7 +21,9 @@ export const LARGE_FILE = {
   name: "test.txt",
   mTime: new Date(2024, 0, 1, 12, 0, 0),
 
-  get data() { return new Uint8Array(1024 * 1024 * 1024 * 4 + 16).fill(65) },
+  get data() {
+    return new Uint8Array(1024 * 1024 * 1024 * 4 + 16).fill(65);
+  },
   size: 1024 * 1024 * 1024 * 4 + 16,
 
   crc: crc32(new Uint8Array(1024 * 1024 * 1024 * 4 + 16).fill(65).buffer),

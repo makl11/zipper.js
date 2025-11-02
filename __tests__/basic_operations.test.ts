@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { collectChunks } from "./utils/test_utils.js";
 import { DIR, FILE } from "./utils/test_data.js";
+import { collectChunks } from "./utils/test_utils.js";
 
 import Zipper from "../src/index.js";
 
@@ -10,19 +10,27 @@ describe("Basic Functionality", () => {
 
   beforeEach(() => {
     zipper = new Zipper();
-    stream = undefined
+    stream = undefined;
   });
 
   describe("Basic ZIP Operations", () => {
     it("should correctly pack a single small file", async () => {
-      expect(() => { zipper.add(FILE, FILE.data) }).not.toThrow();
-      expect(() => { stream = zipper.stream() }).not.toThrow();
+      expect(() => {
+        zipper.add(FILE, FILE.data);
+      }).not.toThrow();
+      expect(() => {
+        stream = zipper.stream();
+      }).not.toThrow();
       await expect(collectChunks(stream!)).resolves.not.toThrow();
     });
 
     it("should create directory entries", async () => {
-      expect(() => { zipper.add(DIR) }).not.toThrow();
-      expect(() => { stream = zipper.stream() }).not.toThrow();
+      expect(() => {
+        zipper.add(DIR);
+      }).not.toThrow();
+      expect(() => {
+        stream = zipper.stream();
+      }).not.toThrow();
       await expect(collectChunks(stream!)).resolves.not.toThrow();
     });
 

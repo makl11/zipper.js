@@ -178,7 +178,9 @@ export class CentralDirectoryHeader<
   get comment(): string {
     const bytes = new Uint8Array(
       this.buffer,
-      this.byteOffset + FILE_NAME_START + this.filenameLength +
+      this.byteOffset +
+        FILE_NAME_START +
+        this.filenameLength +
         this.extraFieldLength,
       this.commentLength,
     );
@@ -189,7 +191,9 @@ export class CentralDirectoryHeader<
     const bytes = new TextEncoder().encode(value);
     const view = new Uint8Array(
       this.buffer,
-      this.byteOffset + FILE_NAME_START + this.filenameLength +
+      this.byteOffset +
+        FILE_NAME_START +
+        this.filenameLength +
         this.extraFieldLength,
     );
     view.set(bytes);
@@ -211,8 +215,8 @@ export class CentralDirectoryHeader<
   }
 
   setExtraFields(fields: ExtraField[], updateLength: boolean = false) {
-    const targetOffset = this.byteOffset + FILE_NAME_START +
-      this.filenameLength;
+    const targetOffset =
+      this.byteOffset + FILE_NAME_START + this.filenameLength;
     let totalLength = 0;
 
     for (const field of fields) {
@@ -236,10 +240,12 @@ export class CentralDirectoryHeader<
   }
 
   override get byteLength(): number {
-    return CentralDirectoryHeader.SIZE +
+    return (
+      CentralDirectoryHeader.SIZE +
       this.filenameLength +
       this.extraFieldLength +
-      this.commentLength;
+      this.commentLength
+    );
   }
 }
 
@@ -273,7 +279,7 @@ export function generateExternalAttrs(entry: ZipEntry): Uint8Array {
   return new Uint8Array([
     dosAttrs, // DOS attributes (byte 0)
     0x00, // Reserved (byte 1)
-    unixMode & 0xFF, // Unix mode low byte (byte 2)
-    (unixMode >> 8) & 0xFF, // Unix mode high byte (byte 3)
+    unixMode & 0xff, // Unix mode low byte (byte 2)
+    (unixMode >> 8) & 0xff, // Unix mode high byte (byte 3)
   ]);
 }

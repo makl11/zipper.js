@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { collectChunks, writeChunksToFile } from "./utils/test_utils.js";
 import { DIR, FILE } from "./utils/test_data.js";
+import { collectChunks, writeChunksToFile } from "./utils/test_utils.js";
 
 import Zipper from "../src/index.js";
 
@@ -75,27 +75,34 @@ describe("Size Prediction", { sequential: true }, () => {
     const stream = zipper.stream();
 
     const chunks = await collectChunks(stream);
-    const totalChunksSize = chunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-    expect(totalChunksSize).toBe(predictedSize);
-  });
-
-  it("should accurately predict size with ZIP64 structures", {
-    timeout: 300_000,
-  }, async () => {
-    const content = new Uint8Array(4 * 1024 * 1024 * 1024 + 16);
-    const contentSize = content.byteLength;
-    zipper.add(FILE, new Blob([content]).stream(), contentSize);
-
-    const predictedSize = zipper.predictSize();
-    const stream = zipper.stream();
-
-    const chunks = await collectChunks(stream);
     const totalChunksSize = chunks.reduce(
       (acc, chunk) => acc + chunk.byteLength,
       0,
     );
-
-    await writeChunksToFile("./z64_chunks.zip", chunks);
     expect(totalChunksSize).toBe(predictedSize);
   });
+
+  it(
+    "should accurately predict size with ZIP64 structures",
+    {
+      timeout: 300_000,
+    },
+    async () => {
+      const content = new Uint8Array(4 * 1024 * 1024 * 1024 + 16);
+      const contentSize = content.byteLength;
+      zipper.add(FILE, new Blob([content]).stream(), contentSize);
+
+      const predictedSize = zipper.predictSize();
+      const stream = zipper.stream();
+
+      const chunks = await collectChunks(stream);
+      const totalChunksSize = chunks.reduce(
+        (acc, chunk) => acc + chunk.byteLength,
+        0,
+      );
+
+      await writeChunksToFile("./z64_chunks.zip", chunks);
+      expect(totalChunksSize).toBe(predictedSize);
+    },
+  );
 });

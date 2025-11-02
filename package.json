@@ -1,41 +1,22 @@
 {
-  "name": "@makl11/zipper.js",
-  "type": "module",
-  "version": "0.7.0",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
   "browser": "./dist/index.iife.js",
-  "types": "./dist/index.d.cts",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/makl11/zipper.js.git"
-  },
-  "keywords": [
-    "zip",
-    "stream"
-  ],
-  "scripts": {
-    "build": "tsdown",
-    "dev": "tsdown --watch",
-    "prepack": "npm run build",
-    "test": "vitest --run",
-    "test:coverage": "vitest --run --coverage"
-  },
   "dependencies": {
     "crc": "^4.3.2"
   },
   "devDependencies": {
+    "@eslint/compat": "^1.4.1",
+    "@eslint/js": "^9.39.0",
     "@types/node": "^24.9.2",
     "@vitest/coverage-v8": "^4.0.6",
     "@vitest/ui": "^4.0.6",
+    "eslint": "^9.39.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
     "tsdown": "^0.15.12",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.2",
     "vitest": "^4.0.6"
   },
-  "files": [
-    "dist/*",
-    "LICENSE"
-  ],
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -46,5 +27,32 @@
       "require": "./dist/node-compat.cjs"
     },
     "./package.json": "./package.json"
-  }
+  },
+  "files": [
+    "dist/*",
+    "LICENSE"
+  ],
+  "keywords": [
+    "zip",
+    "stream"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "name": "@makl11/zipper.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/makl11/zipper.js.git"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "format": "prettier --write .",
+    "lint": "eslint .",
+    "test": "vitest --run",
+    "test:coverage": "vitest --run --coverage",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "type": "module",
+  "types": "./dist/index.d.cts",
+  "version": "0.7.0"
 }
