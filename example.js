@@ -38,15 +38,13 @@ zip.add(
 
 const predictedSize = zip.predictSize();
 
-try {
-  rmSync(OUTFILE, { force: true });
-} catch {}
+rmSync(OUTFILE, { force: true });
 
 const outStream = Writable.toWeb(
   createWriteStream(OUTFILE, { encoding: "binary" }),
 );
 
-zip
+await zip
   .stream()
   .pipeTo(outStream)
   .catch((err) => console.error("Error while generating zip file: ", err))
