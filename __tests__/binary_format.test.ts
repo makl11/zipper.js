@@ -36,7 +36,7 @@ describe("Binary Format", () => {
 
       // Verify every field in the header
       expect(header.signature).toBe(LocalFileHeader.SIGNATURE);
-      expect(header.versionNeeded).toBe(ZIP_VERSION.V1_0); // Base version
+      expect(header.versionNeeded).toBe(ZIP_VERSION.V2_0); // Base version
       expect(Object.values(decodeBitFlags(header.flags))).not.toContain(true); // No flags set for basic storage
       expect(header.compression).toBe(0x0000); // No compression
 
@@ -114,7 +114,7 @@ describe("Binary Format", () => {
     it("should handle ZIP64 when needed", () => {
       const largeFile = {
         ...FILE,
-        size: 0xffffffff,
+        size: 0xffffffff + 0xff,
       };
 
       const headerBuffer = zipper.generateLocalFileHeader(largeFile);
@@ -195,7 +195,7 @@ describe("Binary Format", () => {
 
       // Verify every field in the central directory entry
       expect(header.signature).toBe(CentralDirectoryHeader.SIGNATURE);
-      expect(header.versionNeeded).toBe(ZIP_VERSION.V1_0); // Base version
+      expect(header.versionNeeded).toBe(ZIP_VERSION.V2_0); // Base version
       expect(header.flags).toBe(0x0000);
       expect(header.compression).toBe(0x0000);
       expect(header.lastModifiedTime).toBe(0x6000); // 12:00:00
@@ -309,8 +309,8 @@ describe("Binary Format", () => {
 
       const recordBuffer = zipper.generateEndOfCentralDirectoryRecord(
         totalEntries,
-        centralDirSize,
         centralDirOffset,
+        centralDirSize,
       );
       const record = new EndOfCentralDirectory(recordBuffer.buffer);
 

@@ -249,7 +249,7 @@ describe("File Content", () => {
         lfhOffsets.push(offset);
         const lfh = new LocalFileHeader(stream.buffer, offset);
         expect(lfh.signature).toBe(LocalFileHeader.SIGNATURE);
-        expect(lfh.versionNeeded).toBe(ZIP_VERSION.V1_0);
+        expect(lfh.versionNeeded).toBe(ZIP_VERSION.V2_0);
         expect(lfh.filename).toBe(`file${i}.txt`);
         expect(lfh.extraFieldLength).toBe(0); // Expect no ZIP64ExtraField in LFH
         offset += lfh.byteLength;
@@ -263,7 +263,7 @@ describe("File Content", () => {
       for (let i = 0; i < fileCount; i++) {
         const cdh = new CentralDirectoryHeader(stream.buffer, offset);
         expect(cdh.signature).toBe(CentralDirectoryHeader.SIGNATURE);
-        expect(cdh.versionNeeded).toBe(ZIP_VERSION.V1_0);
+        expect(cdh.versionNeeded).toBe(ZIP_VERSION.V2_0);
         expect(cdh.filename).toBe(`file${i}.txt`);
         expect(cdh.localHeaderOffset).toBe(lfhOffsets[i]);
         expect(cdh.extraFieldLength).toBe(0); // Expect no ZIP64ExtraField in LFH
