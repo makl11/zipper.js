@@ -531,8 +531,14 @@ class Zipper {
   }
 
   /**
+   * @typedef {object} StreamOptions
+   * @prop {AbortSignal} [signal]
+   */
+
+  /**
    * Start streaming the zip content
    *
+   * @param {StreamOptions} [options={}]
    * @return {ReadableStream<Uint8Array>}
    * @memberof Zipper
    */
@@ -541,6 +547,7 @@ class Zipper {
     return new ReadableStream({
       type: "bytes",
       async pull(controller) {
+        if (signal?.aborted) controller.error(signal.reason);
         try {
           const { value, done } = await generator.next();
           if (done) controller.close();
