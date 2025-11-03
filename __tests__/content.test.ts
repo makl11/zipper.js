@@ -174,8 +174,7 @@ describe("File Content", () => {
 
     it("should abort zip generator when a stream has more data than it should", async () => {
       zipper.add(FILE, new Blob([FILE.data]).stream(), FILE.size / 2);
-
-      await expect(collectChunks(zipper.stream())).rejects.toThrow(
+      await expect(collectChunks(zipper.stream(), true)).rejects.toThrow(
         /size missmatch/i,
       );
     });

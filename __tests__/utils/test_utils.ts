@@ -1,17 +1,31 @@
 import { open } from "fs/promises";
 
-export async function collectChunks(stream: ReadableStream<Uint8Array>) {
+export async function collectChunks(
+  stream: ReadableStream<Uint8Array>,
+): Promise<Uint8Array[]>;
+export async function collectChunks(
+  stream: ReadableStream<Uint8Array>,
+  omit_data: false,
+): Promise<Uint8Array[]>;
+export async function collectChunks(
+  stream: ReadableStream<Uint8Array>,
+  omit_data: true,
+): Promise<"### Chunk content omitted ###">;
+export async function collectChunks(
+  stream: ReadableStream<Uint8Array>,
+  omit_data = false,
+) {
   const chunks: Uint8Array[] = [];
   const reader = stream.getReader();
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    chunks.push(value);
+    if (!omit_data) chunks.push(value);
   }
   reader.releaseLock();
 
-  return chunks;
+  return omit_data ? "### Chunk content omitted ###" : chunks;
 }
 
 export function concatUint8Arrays(arrays: Uint8Array[]): Uint8Array {
