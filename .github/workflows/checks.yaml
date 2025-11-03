@@ -71,8 +71,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        shardIndex: [1, 2, 3, 4, 5]
-        shardTotal: [5]
+        shardIndex: [1, 2]
+        shardTotal: [2]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -81,7 +81,7 @@ jobs:
           cache: "npm"
       - name: Install dependencies
         run: npm ci
-      - name: Run tests
+      - name: Run sharded tests
         run: npm run test -- --reporter=blob --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
         continue-on-error: true
       - name: Upload blob report to GitHub Actions Artifacts
