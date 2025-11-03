@@ -78,4 +78,5 @@ jobs:
       - name: install
         run: npm ci
       - name: test
+        timeout-minutes: 10
         run: npm run test -- --reporter=github-actions
