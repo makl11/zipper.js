@@ -4,6 +4,9 @@ export default defineConfig({
   test: {
     dir: "__tests__",
     isolate: false,
-    fileParallelism: false,
+    fileParallelism: !process.env.CI,
+    sequence: {
+      concurrent: !process.env.CI,
+    },
   },
 });
