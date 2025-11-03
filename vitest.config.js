@@ -4,5 +4,6 @@ export default defineConfig({
   test: {
     dir: "__tests__",
     isolate: false,
+    fileParallelism: false,
   },
 });
