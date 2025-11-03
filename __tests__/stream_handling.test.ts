@@ -35,7 +35,9 @@ describe("Stream Handling", () => {
         const controller = new AbortController();
         const stream = zipper.stream({ signal: controller.signal });
         setTimeout(() => controller.abort("User abort"), 100);
-        await expect(collectChunks(stream)).rejects.toThrow(/user abort/i);
+        await expect(collectChunks(stream, true)).rejects.toThrow(
+          /user abort/i,
+        );
       },
     );
   });
@@ -85,7 +87,7 @@ describe("Stream Handling", () => {
       zipper.add(FILE, errorStream, 10);
 
       const stream = zipper.stream();
-      await expect(collectChunks(stream)).rejects.toThrow("Stream error");
+      await expect(collectChunks(stream, true)).rejects.toThrow("Stream error");
     });
 
     it("should handle invalid input stream data", async () => {
@@ -101,7 +103,7 @@ describe("Stream Handling", () => {
       zipper.add(FILE, invalidStream, 10);
 
       const stream = zipper.stream();
-      await expect(collectChunks(stream)).rejects.toThrow();
+      await expect(collectChunks(stream, true)).rejects.toThrow();
     });
 
     it("should handle interleaved invalid input stream data", async () => {
@@ -122,7 +124,7 @@ describe("Stream Handling", () => {
 
       zipper.add(FILE, invalidStream, 10);
 
-      await expect(collectChunks(zipper.stream())).rejects.toThrow(
+      await expect(collectChunks(zipper.stream(), true)).rejects.toThrow(
         /invalid input data/i,
       );
     });
