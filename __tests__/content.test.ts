@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
+import Zipper from "../src/index.js";
 import {
   FEATURES_VERSION,
   ZIP_VERSION,
@@ -14,17 +15,11 @@ import {
 import { DIR, FILE, LARGE_FILE } from "./utils/test_data.js";
 import { collectChunks, concatUint8Arrays } from "./utils/test_utils.js";
 
-import Zipper from "../src/index.js";
-
 describe("File Content", () => {
-  let zipper: Zipper;
-
-  beforeEach(() => {
-    zipper = new Zipper();
-  });
-
   describe("Content Types", () => {
     it("should handle empty files", async () => {
+      const zipper = new Zipper();
+
       expect(() => zipper.add(FILE, new Uint8Array(0))).not.toThrow();
 
       const streamPromise = collectChunks(zipper.stream()).then(
@@ -49,6 +44,8 @@ describe("File Content", () => {
     });
 
     it("should handle Uint8Array content", async () => {
+      const zipper = new Zipper();
+
       expect(() => zipper.add(FILE, FILE.data)).not.toThrow();
 
       const streamPromise = collectChunks(zipper.stream()).then(
@@ -79,6 +76,8 @@ describe("File Content", () => {
     });
 
     it("should handle ReadableStream content", async () => {
+      const zipper = new Zipper();
+
       expect(() =>
         zipper.add(FILE, new Blob([FILE.data]).stream(), FILE.size),
       ).not.toThrow();
@@ -112,6 +111,8 @@ describe("File Content", () => {
     });
 
     it("should handle empty ReadableStream content", async () => {
+      const zipper = new Zipper();
+
       const sourceStream = new ReadableStream<Uint8Array>({
         start(controller) {
           controller.close();
@@ -142,6 +143,8 @@ describe("File Content", () => {
 
   describe("Error Cases", () => {
     it("should reject invalid entry data", () => {
+      const zipper = new Zipper();
+
       expect(() =>
         zipper.add(FILE, "invalid data" as unknown as Uint8Array),
       ).toThrow(/Uint8Array or ReadableStream/i);
@@ -154,6 +157,8 @@ describe("File Content", () => {
     });
 
     it("should handle malformed Uint8Array views", () => {
+      const zipper = new Zipper();
+
       const buffer = new ArrayBuffer(100);
       const view1 = new Uint8Array(buffer, 0, 50);
       const view2 = new Uint8Array(buffer, 50, 50);
@@ -167,12 +172,16 @@ describe("File Content", () => {
     });
 
     it("should reject new entries when zip file is already being generated", () => {
+      const zipper = new Zipper();
+
       expect(() => zipper.add(DIR)).not.toThrow();
       zipper.stream();
       expect(() => zipper.add({ ...DIR, name: "2" + DIR.name })).toThrow();
     });
 
     it("should abort zip generator when a stream has more data than it should", async () => {
+      const zipper = new Zipper();
+
       zipper.add(FILE, new Blob([FILE.data]).stream(), FILE.size / 2);
       await expect(collectChunks(zipper.stream(), true)).rejects.toThrow(
         /size missmatch/i,
@@ -182,6 +191,8 @@ describe("File Content", () => {
 
   describe("ZIP64 Thresholds", { timeout: 120_000, sequential: true }, () => {
     it("should switch to ZIP64 for files larger than 4GB", async () => {
+      const zipper = new Zipper();
+
       zipper.add({ ...LARGE_FILE }, LARGE_FILE.data);
 
       const stream = await collectChunks(zipper.stream()).then(
@@ -205,6 +216,8 @@ describe("File Content", () => {
     });
 
     it("should handle streamed content larger than 4GB with ZIP64", async () => {
+      const zipper = new Zipper();
+
       zipper.add(
         LARGE_FILE,
         new Blob([LARGE_FILE.data]).stream(),
@@ -232,6 +245,8 @@ describe("File Content", () => {
     });
 
     it("should handle exactly 65535 files", async () => {
+      const zipper = new Zipper();
+
       const fileCount = 65535;
       for (let i = 0; i < fileCount; i++) {
         zipper.add({ name: `file${i}.txt` }, new Uint8Array([65]));

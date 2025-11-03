@@ -1,24 +1,21 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { FILE } from "./utils/test_data.js";
 import { collectChunks } from "./utils/test_utils.js";
 
 import Zipper from "../src/index.js";
 
 describe("Stream Handling", () => {
-  let zipper: Zipper;
-
-  beforeEach(() => {
-    zipper = new Zipper();
-  });
-
-  // Core functionality
   describe("Basic Stream Operations", () => {
     it("should provide a valid ReadableStream", () => {
+      const zipper = new Zipper();
+
       const stream = zipper.stream();
       expect(stream).toBeInstanceOf(ReadableStream);
     });
 
     it("should stream data in chunks", async () => {
+      const zipper = new Zipper();
+
       zipper.add(FILE, FILE.data);
 
       const stream = zipper.stream();
@@ -30,6 +27,8 @@ describe("Stream Handling", () => {
     it.fails(
       "should stop zip generation when an abort signal is received",
       async () => {
+        const zipper = new Zipper();
+
         zipper.add(FILE, FILE.data);
 
         const controller = new AbortController();
@@ -42,9 +41,10 @@ describe("Stream Handling", () => {
     );
   });
 
-  // Error handling
   describe("Error Cases", () => {
     it("should handle output stream errors", async () => {
+      const zipper = new Zipper();
+
       const errorStream = new WritableStream<Uint8Array>({
         write() {
           throw new Error("Stream controller error");
@@ -60,6 +60,8 @@ describe("Stream Handling", () => {
     });
 
     it("should handle output stream controller abort", async () => {
+      const zipper = new Zipper();
+
       zipper.add(FILE, FILE.data);
       const stream = zipper.stream();
 
@@ -77,6 +79,8 @@ describe("Stream Handling", () => {
     });
 
     it("should handle input stream errors", async () => {
+      const zipper = new Zipper();
+
       const errorStream = new ReadableStream<Uint8Array>({
         type: "bytes",
         start(controller) {
@@ -91,6 +95,8 @@ describe("Stream Handling", () => {
     });
 
     it("should handle invalid input stream data", async () => {
+      const zipper = new Zipper();
+
       const invalidStream = new ReadableStream({
         type: "bytes",
         start(controller) {
@@ -107,6 +113,8 @@ describe("Stream Handling", () => {
     });
 
     it("should handle interleaved invalid input stream data", async () => {
+      const zipper = new Zipper();
+
       let count = 0;
       const invalidStream = new ReadableStream({
         type: "bytes",
@@ -130,6 +138,8 @@ describe("Stream Handling", () => {
     });
 
     it("should properly close streams when cancelled", async () => {
+      const zipper = new Zipper();
+
       zipper.add(FILE, FILE.data);
 
       const stream = zipper.stream();

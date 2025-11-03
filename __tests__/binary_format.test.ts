@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   decodeBitFlags,
   encodeBitFlags,
@@ -23,14 +23,10 @@ import type { ZipFileStream } from "../src/index.js";
 import Zipper from "../src/index.js";
 
 describe("Binary Format", () => {
-  let zipper: Zipper;
-
-  beforeEach(() => {
-    zipper = new Zipper();
-  });
-
   describe("Local File Header", () => {
     it("should generate correct header structure for basic file", () => {
+      const zipper = new Zipper();
+
       const headerBuffer = zipper.generateLocalFileHeader(FILE, FILE.crc);
       const header = new LocalFileHeader(headerBuffer.buffer);
 
@@ -54,6 +50,8 @@ describe("Binary Format", () => {
     });
 
     it("should generate correct header structure for streamed file", () => {
+      const zipper = new Zipper();
+
       const file = {
         ...FILE,
         data: new Blob([FILE.data]).stream(),
@@ -70,6 +68,8 @@ describe("Binary Format", () => {
     });
 
     it("should handle UTF-8 filenames correctly", () => {
+      const zipper = new Zipper();
+
       const file = { ...FILE, path: "tést.txt" };
 
       const headerBuffer = zipper.generateLocalFileHeader(file);
@@ -84,6 +84,8 @@ describe("Binary Format", () => {
     });
 
     it("should handle directory entries with correct attributes", () => {
+      const zipper = new Zipper();
+
       const headerBuffer = zipper.generateLocalFileHeader(DIR);
       const header = new LocalFileHeader(headerBuffer.buffer);
 
@@ -97,6 +99,8 @@ describe("Binary Format", () => {
     });
 
     it("should handle nested directory paths", () => {
+      const zipper = new Zipper();
+
       const dir = { ...DIR, name: "parent/child/grandchild/" };
 
       const headerBuffer = zipper.generateLocalFileHeader(dir);
@@ -112,6 +116,8 @@ describe("Binary Format", () => {
     });
 
     it("should handle ZIP64 when needed", () => {
+      const zipper = new Zipper();
+
       const largeFile = {
         ...FILE,
         size: 0xffffffff + 0xff,
@@ -134,6 +140,8 @@ describe("Binary Format", () => {
     });
 
     it("should handle DOS time field limits", () => {
+      const zipper = new Zipper();
+
       // Should default to minimum DOS date (1980-01-01)
       const headerBuffer1 = zipper.generateLocalFileHeader({
         ...FILE,
@@ -156,6 +164,8 @@ describe("Binary Format", () => {
 
   describe("Data Descriptor", () => {
     it("should generate correct data descriptor for streamed files", () => {
+      const zipper = new Zipper();
+
       const headerBuffer = zipper.generateDataDescriptor(FILE.crc, FILE.size);
       const header = new DataDescriptor(headerBuffer.buffer);
 
@@ -168,6 +178,8 @@ describe("Binary Format", () => {
     });
 
     it("should generate correct ZIP64 data descriptor for streamed files larger than 4GB", () => {
+      const zipper = new Zipper();
+
       const headerBuffer = zipper.generateDataDescriptor(
         FILE.crc,
         0xffffffff + 0xff,
@@ -185,6 +197,8 @@ describe("Binary Format", () => {
 
   describe("Central Directory Header", () => {
     it("should generate correct central directory entry for files", () => {
+      const zipper = new Zipper();
+
       const fakeRelativeOffset = 0x1234;
       const headerBuffer = zipper.generateCentralDirectoryHeader(
         { ...FILE, size: undefined },
@@ -219,6 +233,8 @@ describe("Binary Format", () => {
     });
 
     it("should handle ZIP64 when needed", () => {
+      const zipper = new Zipper();
+
       const headerBuffer = zipper.generateCentralDirectoryHeader(
         { ...LARGE_FILE, size: undefined },
         0,
@@ -241,6 +257,8 @@ describe("Binary Format", () => {
     });
 
     it("should handle UTF-8 filenames correctly", () => {
+      const zipper = new Zipper();
+
       const file = { ...FILE, name: "tést.txt", size: undefined };
 
       const headerBuffer = zipper.generateCentralDirectoryHeader(file, 0, 0);
@@ -257,6 +275,8 @@ describe("Binary Format", () => {
 
   describe("ZIP64 End of Central Directory Record", () => {
     it("should generate correct ZIP64 EOCD Record structure", () => {
+      const zipper = new Zipper();
+
       const zip64RecordBuffer = zipper.generateZip64EndOfCentralDirectoryRecord(
         5,
         1000,
@@ -274,6 +294,8 @@ describe("Binary Format", () => {
 
   describe("ZIP64 End of Central Directory Locator", () => {
     it("should generate correct ZIP64 EOCD Locator structure", () => {
+      const zipper = new Zipper();
+
       const locatorBuffer = zipper.generateZip64EndOfCentralDirectoryLocator(
         2000,
         1000,
@@ -293,6 +315,8 @@ describe("Binary Format", () => {
 
   describe("End of Central Directory", () => {
     it("should generate correct EOCD structure", () => {
+      const zipper = new Zipper();
+
       const totalEntries = 5;
       const centralDirSize = 500;
       const centralDirOffset = 1000;

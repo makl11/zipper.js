@@ -1,18 +1,10 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
+import Zipper from "../src/index.js";
 import { LocalFileHeader } from "./utils/binary/LocalFileHeader.js";
 import { decodeBitFlags } from "./utils/binary/constants/bitflags.js";
 import { collectChunks, concatUint8Arrays } from "./utils/test_utils.js";
 
-import Zipper from "../src/index.js";
-
 describe("Path Handling", () => {
-  let zipper: Zipper;
-
-  beforeEach(() => {
-    zipper = new Zipper();
-  });
-
-  // Core functionality
   describe("Basic Path Validation", () => {
     it.each([
       ["simple.txt", "simple filename"],
@@ -20,6 +12,8 @@ describe("Path Handling", () => {
       ["file_with_!@#$%^&()_.txt", "special characters"],
       ["files/with/forward/slashes.txt", "forward slashes"],
     ])("should handle ASCII paths with %s (%s)", async (name, _description) => {
+      const zipper = new Zipper();
+
       zipper.add({ name }, new Uint8Array([1]));
       const data = await collectChunks(zipper.stream()).then(concatUint8Arrays);
       const lfh = new LocalFileHeader(data.buffer);
@@ -34,6 +28,8 @@ describe("Path Handling", () => {
     ])(
       "should handle Unicode paths with %s (%s)",
       async (name, _description) => {
+        const zipper = new Zipper();
+
         zipper.add({ name }, new Uint8Array([1]));
         const data = await collectChunks(zipper.stream()).then(
           concatUint8Arrays,
@@ -46,6 +42,8 @@ describe("Path Handling", () => {
     );
 
     it("should handle maximum allowed path length", () => {
+      const zipper = new Zipper();
+
       const longPath = "a".repeat(65535);
       expect(() =>
         zipper.add({ name: longPath }, new Uint8Array([1])),
@@ -79,10 +77,14 @@ describe("Path Handling", () => {
       ["AUX.txt", "Windows reserved name"],
       ["NUL.txt", "Windows reserved name"],
     ])("should reject %s (%s)", (name, _description) => {
+      const zipper = new Zipper();
+
       expect(() => zipper.add({ name }, new Uint8Array([1]))).toThrow();
     });
 
     it("should handle duplicate paths", () => {
+      const zipper = new Zipper();
+
       zipper.add({ name: "test.txt" }, new Uint8Array([1]));
       expect(() =>
         zipper.add({ name: "test.txt" }, new Uint8Array([2])),
@@ -91,6 +93,8 @@ describe("Path Handling", () => {
   });
 
   it("should prevent path traversal", () => {
+    const zipper = new Zipper();
+
     expect(() =>
       zipper.add({ name: "../test.txt" }, new Uint8Array([1])),
     ).toThrow();

@@ -1,17 +1,13 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { DIR, FILE } from "./utils/test_data.js";
 import { collectChunks, writeChunksToFile } from "./utils/test_utils.js";
 
 import Zipper from "../src/index.js";
 
 describe("Size Prediction", { sequential: true }, () => {
-  let zipper: Zipper;
-
-  beforeEach(() => {
-    zipper = new Zipper();
-  });
-
   it("should update predicted size when adding new files", async () => {
+    const zipper = new Zipper();
+
     const initialSize = zipper.predictSize();
 
     zipper.add(FILE, FILE.data);
@@ -34,6 +30,8 @@ describe("Size Prediction", { sequential: true }, () => {
   });
 
   it("should accurately predict final ZIP size for a single file", async () => {
+    const zipper = new Zipper();
+
     zipper.add(FILE, FILE.data);
 
     const predictedSize = zipper.predictSize();
@@ -48,6 +46,8 @@ describe("Size Prediction", { sequential: true }, () => {
   });
 
   it("should accurately predict final ZIP size for a single streamed file", async () => {
+    const zipper = new Zipper();
+
     zipper.add(FILE, new Blob([FILE.data]).stream(), FILE.size);
 
     const predictedSize = zipper.predictSize();
@@ -67,6 +67,8 @@ describe("Size Prediction", { sequential: true }, () => {
   });
 
   it("should accurately predict final ZIP size for file and directory entries", async () => {
+    const zipper = new Zipper();
+
     zipper.add(FILE, FILE.data);
     zipper.add(DIR);
     zipper.add({ ...FILE, name: DIR.name + FILE.name }, FILE.data);
@@ -88,6 +90,8 @@ describe("Size Prediction", { sequential: true }, () => {
       timeout: 300_000,
     },
     async () => {
+      const zipper = new Zipper();
+
       const content = new Uint8Array(4 * 1024 * 1024 * 1024 + 16);
       const contentSize = content.byteLength;
       zipper.add(FILE, new Blob([content]).stream(), contentSize);

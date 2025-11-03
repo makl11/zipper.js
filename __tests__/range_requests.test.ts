@@ -1,21 +1,16 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { FILE } from "./utils/test_data.js";
 import { collectChunks, concatUint8Arrays } from "./utils/test_utils.js";
 
 import Zipper from "../src/index.js";
 
 describe.skip("HTTP Range Request Support", () => {
-  let zipper: Zipper;
-
-  beforeEach(() => {
-    zipper = new Zipper();
-  });
-
-  // Core functionality
   describe("Basic Range Operations", () => {
     it("should support basic range requests", async () => {
+      const zipper = new Zipper();
+
       zipper.add(FILE);
 
       const stream = zipper.stream();
@@ -37,6 +32,8 @@ describe.skip("HTTP Range Request Support", () => {
     });
 
     it("should maintain consistent byte order across range requests", async () => {
+      const zipper = new Zipper();
+
       const content = new Uint8Array([
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
       ]);
@@ -57,9 +54,10 @@ describe.skip("HTTP Range Request Support", () => {
     });
   });
 
-  // Edge cases
   describe("Boundary Conditions", () => {
     it("should handle range requests crossing file boundaries", async () => {
+      const zipper = new Zipper();
+
       zipper.add(FILE, new Uint8Array(100).fill(65));
       zipper.add(FILE, new Uint8Array(100).fill(66));
 
@@ -73,6 +71,8 @@ describe.skip("HTTP Range Request Support", () => {
     });
 
     it("should handle range requests spanning central directory", async () => {
+      const zipper = new Zipper();
+
       zipper.add(FILE, new Uint8Array(100));
       const totalSize = zipper.predictSize();
 
@@ -86,6 +86,8 @@ describe.skip("HTTP Range Request Support", () => {
     });
 
     it("should handle range requests at structure boundaries", async () => {
+      const zipper = new Zipper();
+
       zipper.add(FILE, new Uint8Array(1000));
 
       const totalSize = zipper.predictSize();
@@ -103,9 +105,10 @@ describe.skip("HTTP Range Request Support", () => {
     });
   });
 
-  // Error handling
   describe("Error Cases", () => {
     it("should validate range request parameters", () => {
+      const zipper = new Zipper();
+
       zipper.add(FILE, new Uint8Array(100));
       const totalSize = zipper.predictSize();
 
@@ -115,6 +118,8 @@ describe.skip("HTTP Range Request Support", () => {
     });
 
     it("should handle aborted range requests", async () => {
+      const zipper = new Zipper();
+
       zipper.add(FILE, new Uint8Array(1000));
 
       const controller = new AbortController();
@@ -127,9 +132,10 @@ describe.skip("HTTP Range Request Support", () => {
     });
   });
 
-  // Concurrent operations
   describe("Concurrency", () => {
     it("should support concurrent range requests", async () => {
+      const zipper = new Zipper();
+
       zipper.add(FILE, new Uint8Array(1000));
 
       const ranges = [
@@ -153,6 +159,8 @@ describe.skip("HTTP Range Request Support", () => {
     });
 
     it("should handle rapid creation and cancellation of range streams", async () => {
+      const zipper = new Zipper();
+
       zipper.add(FILE, new Uint8Array(1000000));
 
       const streams: ReadableStream[] = [];
