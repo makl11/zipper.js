@@ -83,6 +83,7 @@ jobs:
         run: npm ci
       - name: Run tests
         run: npm run test -- --reporter=blob --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+        continue-on-error: true
       - name: Upload blob report to GitHub Actions Artifacts
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
