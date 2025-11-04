@@ -5,6 +5,7 @@ const {
   CRC32,
   COMPRESSED_SIZE,
   UNCOMPRESSED_SIZE,
+  ZIP64_UNCOMPRESSED_SIZE,
 } = DATA_DESCRIPTOR;
 
 export class DataDescriptor<
@@ -48,12 +49,17 @@ export class DataDescriptor<
     this.setUint32(CRC32, value, true);
   }
 
-  get compressedSize(): number | bigint {
-    return this.isZip64
-      ? this.getBigUint64(COMPRESSED_SIZE, true)
-      : this.getUint32(COMPRESSED_SIZE, true);
+  get compressedSize(): number {
+    if (this.isZip64) {
+      const value = this.getBigUint64(COMPRESSED_SIZE, true);
+      // Technically this limit is incorrect but bitint values are inconvenient
+      if (value >= Number.MAX_SAFE_INTEGER) return NaN;
+      return Number(value);
+    }
+
+    return this.getUint32(COMPRESSED_SIZE, true);
   }
-  set compressedSize(value: number | bigint) {
+  set compressedSize(value: number) {
     if (this.isZip64) {
       this.setBigUint64(COMPRESSED_SIZE, BigInt(value), true);
     } else {
@@ -61,14 +67,19 @@ export class DataDescriptor<
     }
   }
 
-  get uncompressedSize(): number | bigint {
-    return this.isZip64
-      ? this.getBigUint64(UNCOMPRESSED_SIZE + 4, true)
-      : this.getUint32(UNCOMPRESSED_SIZE, true);
-  }
-  set uncompressedSize(value: number | bigint) {
+  get uncompressedSize(): number {
     if (this.isZip64) {
-      this.setBigUint64(UNCOMPRESSED_SIZE + 4, BigInt(value), true);
+      const value = this.getBigUint64(ZIP64_UNCOMPRESSED_SIZE, true);
+      // Technically this limit is incorrect but bitint values are inconvenient
+      if (value >= Number.MAX_SAFE_INTEGER) return NaN;
+      return Number(value);
+    }
+
+    return this.getUint32(UNCOMPRESSED_SIZE, true);
+  }
+  set uncompressedSize(value: number) {
+    if (this.isZip64) {
+      this.setBigUint64(ZIP64_UNCOMPRESSED_SIZE, BigInt(value), true);
     } else {
       this.setUint32(UNCOMPRESSED_SIZE, Number(value), true);
     }

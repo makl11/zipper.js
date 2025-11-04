@@ -34,7 +34,7 @@ export const LOCAL_FILE_HEADER = {
 } as const;
 
 /** @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT#:~:text=4.3.12%20%20Central%20directory%20structure */
-export const CENTRAL_DIRECTORY = {
+export const CENTRAL_DIRECTORY_FILE_HEADER = {
   /** Central directory header signature (bytes 0-3) */
   SIGNATURE: 0,
   /** Version made by (bytes 4-5) */
@@ -68,7 +68,7 @@ export const CENTRAL_DIRECTORY = {
   /** External file attributes (bytes 38-41) */
   EXTERNAL_ATTRIBUTES: 38,
   /** Relative offset of local header (bytes 42-45) */
-  LOCAL_HEADER_OFFSET: 42,
+  LOCAL_FILE_HEADER_OFFSET: 42,
   /** Filename (starts at byte 46) */
   FILE_NAME_START: 46,
 } as const;
@@ -86,9 +86,9 @@ export const END_OF_CENTRAL_DIR = {
   /** Total number of central directory records (bytes 10-11) */
   TOTAL_ENTRIES: 10,
   /** Size of central directory in bytes (bytes 12-15) */
-  SIZE: 12,
+  CENTRAL_DIRECTORY_SIZE: 12,
   /** Offset of central directory (bytes 16-19) */
-  OFFSET: 16,
+  CENTRAL_DIRECTORY_OFFSET: 16,
   /** Comment length (bytes 20-21) */
   COMMENT_LENGTH: 20,
   /** Comment (starts at byte 22) */
@@ -101,10 +101,12 @@ export const DATA_DESCRIPTOR = {
   SIGNATURE: 0,
   /** CRC-32 (bytes 4-7) */
   CRC32: 4,
-  /** Compressed size (bytes 8-11) */
+  /** Compressed size (bytes 8-11) | zip64: (bytes 8-15) */
   COMPRESSED_SIZE: 8,
   /** Uncompressed size (bytes 12-15) */
   UNCOMPRESSED_SIZE: 12,
+  /** Zip64 uncompressed size (bytes 16-24) */
+  ZIP64_UNCOMPRESSED_SIZE: 16,
 } as const;
 
 /** @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT#:~:text=4.3.14%20%20Zip64%20end%20of%20central%20directory%20record */
@@ -126,19 +128,21 @@ export const ZIP64_END_OF_CENTRAL_DIR = {
   /** Total number of entries (bytes 32-39) */
   TOTAL_ENTRIES: 32,
   /** Size of central directory (bytes 40-47) */
-  CD_SIZE: 40,
+  CENTRAL_DIRECTORY_SIZE: 40,
   /** Offset of central directory (bytes 48-55) */
-  CD_OFFSET: 48,
+  CENTRAL_DIRECTORY_OFFSET: 48,
+  /** Comment (starts at byte 56 up to the size of EOCD64) */
+  COMMENT_START: 56,
 } as const;
 
 /** @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT#:~:text=4.3.15%20Zip64%20end%20of%20central%20directory%20locator */
 export const ZIP64_END_OF_CENTRAL_DIR_LOCATOR = {
   /** ZIP64 end of central dir locator signature (bytes 0-3) */
   SIGNATURE: 0,
-  /** Number of disks (bytes 4-7) */
-  DISK_NUMBER: 4,
+  /** Number of disk with ZIP64 end of central directory record (bytes 4-7) */
+  EOCD64_DISK_NUMBER: 4,
   /** Offset of ZIP64 end of central directory record (bytes 8-15) */
-  CD_OFFSET: 8,
+  EOCD64_OFFSET: 8,
   /** Total number of disks (bytes 16-19) */
   TOTAL_DISKS: 16,
 } as const;

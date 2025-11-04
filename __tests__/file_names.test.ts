@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import Zipper from "../src/index.js";
 import { LocalFileHeader } from "./utils/binary/LocalFileHeader.js";
-import { decodeBitFlags } from "./utils/binary/constants/bitflags.js";
 import { collectChunks, concatUint8Arrays } from "./utils/test_utils.js";
 
 describe("Path Handling", () => {
@@ -36,7 +35,7 @@ describe("Path Handling", () => {
         );
         const lfh = new LocalFileHeader(data.buffer);
         expect(lfh.filename).toBe(name);
-        const bitFlags = decodeBitFlags(lfh.flags);
+        const bitFlags = lfh.flags;
         expect(bitFlags.UTF8).toBe(true);
       },
     );

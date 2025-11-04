@@ -1,20 +1,17 @@
 import { describe, expect, it } from "vitest";
-import {
-  decodeBitFlags,
-  encodeBitFlags,
-} from "./utils/binary/constants/bitflags.js";
+
 import {
   FEATURES_VERSION,
   ZIP_VERSION,
 } from "./utils/binary/constants/versions.js";
 import {
-  CentralDirectoryHeader,
+  CentralDirectoryFileHeader,
   DataDescriptor,
-  EndOfCentralDirectory,
+  EndOfCentralDirectoryRecord,
   ExtraField,
   LocalFileHeader,
-  Zip64EndOfCentralDirectory,
   Zip64EndOfCentralDirectoryLocator,
+  Zip64EndOfCentralDirectoryRecord,
   Zip64ExtraField,
 } from "./utils/binary/index.js";
 import { DIR, FILE, LARGE_FILE } from "./utils/test_data.js";
@@ -33,7 +30,7 @@ describe("Binary Format", () => {
       // Verify every field in the header
       expect(header.signature).toBe(LocalFileHeader.SIGNATURE);
       expect(header.versionNeeded).toBe(ZIP_VERSION.V2_0); // Base version
-      expect(Object.values(decodeBitFlags(header.flags))).not.toContain(true); // No flags set for basic storage
+      expect(Object.values(header.flags)).not.toContain(true); // No flags set for basic storage
       expect(header.compression).toBe(0x0000); // No compression
 
       expect(header.lastModifiedTime).toBe(0x6000);
@@ -61,7 +58,7 @@ describe("Binary Format", () => {
       const header = new LocalFileHeader(headerBuffer.buffer);
 
       expect(header.signature).toBe(LocalFileHeader.SIGNATURE);
-      expect(decodeBitFlags(header.flags).DATA_DESCRIPTOR).toBe(true); // Flag set for data descriptor
+      expect(header.flags.DATA_DESCRIPTOR).toBe(true); // Flag set for data descriptor
       expect(header.crc32).toBe(0); // Located in Data Descriptor instead
       expect(header.compressedSize).toBe(0); // Located in Data Descriptor instead
       expect(header.uncompressedSize).toBe(0); // Located in Data Descriptor instead
@@ -76,8 +73,7 @@ describe("Binary Format", () => {
       const header = new LocalFileHeader(headerBuffer.buffer);
 
       expect(header.signature).toBe(LocalFileHeader.SIGNATURE);
-      const decodedFlags = decodeBitFlags(header.flags);
-      expect(decodedFlags.UTF8).toBe(true);
+      expect(header.flags.UTF8).toBe(true);
       // "test.txt" = 8 + "´" = 1 or "tst.txt" = 7 + "é" = 2
       expect(header.filenameLength).toBe(9);
       expect(header.filename).toBe("tést.txt");
@@ -116,6 +112,7 @@ describe("Binary Format", () => {
     });
 
     it("should handle ZIP64 when needed", () => {
+      // TODO: this test needs a rewrite. The zip64 extra field is more complicated than this
       const zipper = new Zipper();
 
       const largeFile = {
@@ -135,8 +132,8 @@ describe("Binary Format", () => {
       const zip64Field = header.extraFields.find(ExtraField.isZip64);
       expect(zip64Field).toBeDefined();
       expect(zip64Field!.dataSize).toBe(Zip64ExtraField.DATA_SIZE_LFH);
-      expect(zip64Field!.compressedSize).toBe(BigInt(largeFile.size));
-      expect(zip64Field!.uncompressedSize).toBe(BigInt(largeFile.size));
+      expect(zip64Field!.compressedSize).toBe(largeFile.size);
+      expect(zip64Field!.uncompressedSize).toBe(largeFile.size);
     });
 
     it("should handle DOS time field limits", () => {
@@ -190,8 +187,8 @@ describe("Binary Format", () => {
       expect(header.signature).toBe(DataDescriptor.SIGNATURE);
       expect(header.byteLength).toBe(DataDescriptor.SIZE_ZIP64);
       expect(header.crc32).toBe(FILE.crc);
-      expect(header.compressedSize).toBe(BigInt(0xffffffff + 0xff));
-      expect(header.uncompressedSize).toBe(BigInt(0xffffffff + 0xff));
+      expect(header.compressedSize).toBe(0xffffffff + 0xff);
+      expect(header.uncompressedSize).toBe(0xffffffff + 0xff);
     });
   });
 
@@ -205,12 +202,12 @@ describe("Binary Format", () => {
         fakeRelativeOffset,
         FILE.crc,
       );
-      const header = new CentralDirectoryHeader(headerBuffer.buffer);
+      const header = new CentralDirectoryFileHeader(headerBuffer.buffer);
 
       // Verify every field in the central directory entry
-      expect(header.signature).toBe(CentralDirectoryHeader.SIGNATURE);
+      expect(header.signature).toBe(CentralDirectoryFileHeader.SIGNATURE);
       expect(header.versionNeeded).toBe(ZIP_VERSION.V2_0); // Base version
-      expect(header.flags).toBe(0x0000);
+      expect(Object.values(header.flags)).not.toContain(true); // No flags set for basic storage
       expect(header.compression).toBe(0x0000);
       expect(header.lastModifiedTime).toBe(0x6000); // 12:00:00
       expect(header.lastModifiedDate).toBe(0x5821); // 2024-01-01
@@ -226,7 +223,7 @@ describe("Binary Format", () => {
       const unixPermissions = (header.externalAttributes >> 16) & 0o777;
       expect(dosAttributes & 0x20).toBe(0x20); // Archive flag
       expect(unixPermissions).toBe(0o644); // rw-r--r--
-      expect(header.localHeaderOffset).toBe(fakeRelativeOffset);
+      expect(header.localFileHeaderOffset).toBe(fakeRelativeOffset);
       expect(header.filename).toBe(FILE.name);
       expect(header.comment).toBe("");
       expect(header.extraFields).toStrictEqual([]);
@@ -240,7 +237,7 @@ describe("Binary Format", () => {
         0,
         0,
       );
-      const header = new CentralDirectoryHeader(headerBuffer.buffer);
+      const header = new CentralDirectoryFileHeader(headerBuffer.buffer);
 
       // Check ZIP64 version and markers
       expect(header.versionNeeded).toBe(FEATURES_VERSION.ZIP64); // ZIP64 version
@@ -250,10 +247,10 @@ describe("Binary Format", () => {
       const zip64Field = header.extraFields.find(ExtraField.isZip64);
       expect(zip64Field).toBeDefined();
       expect(zip64Field!.dataSize).toBe(Zip64ExtraField.DATA_SIZE_CDH);
-      expect(zip64Field!.compressedSize).toBe(BigInt(LARGE_FILE.size));
-      expect(zip64Field!.uncompressedSize).toBe(BigInt(LARGE_FILE.size));
+      expect(zip64Field!.compressedSize).toBe(LARGE_FILE.size);
+      expect(zip64Field!.uncompressedSize).toBe(LARGE_FILE.size);
       expect(zip64Field!.diskStartNumber).toBe(0);
-      expect(zip64Field!.relativeHeaderOffset).toBe(0n);
+      expect(zip64Field!.relativeHeaderOffset).toBe(0);
     });
 
     it("should handle UTF-8 filenames correctly", () => {
@@ -262,11 +259,10 @@ describe("Binary Format", () => {
       const file = { ...FILE, name: "tést.txt", size: undefined };
 
       const headerBuffer = zipper.generateCentralDirectoryHeader(file, 0, 0);
-      const header = new CentralDirectoryHeader(headerBuffer.buffer);
+      const header = new CentralDirectoryFileHeader(headerBuffer.buffer);
 
-      expect(header.signature).toBe(CentralDirectoryHeader.SIGNATURE);
-      const decodedFlags = decodeBitFlags(header.flags);
-      expect(decodedFlags.UTF8).toBe(true);
+      expect(header.signature).toBe(CentralDirectoryFileHeader.SIGNATURE);
+      expect(header.flags.UTF8).toBe(true);
       // "test.txt" = 8 + "´" = 1 or "tst.txt" = 7 + "é" = 2
       expect(header.filenameLength).toBe(9);
       expect(header.filename).toBe("tést.txt");
@@ -282,11 +278,13 @@ describe("Binary Format", () => {
         1000,
         2000,
       );
-      const zip64Record = new Zip64EndOfCentralDirectory(
+      const zip64Record = new Zip64EndOfCentralDirectoryRecord(
         zip64RecordBuffer.buffer,
       );
 
-      expect(zip64Record.signature).toBe(Zip64EndOfCentralDirectory.SIGNATURE);
+      expect(zip64Record.signature).toBe(
+        Zip64EndOfCentralDirectoryRecord.SIGNATURE,
+      );
       expect(Number(zip64Record.recordSize)).toBe(44); // Size of ZIP64 EOCD record
       expect(zip64Record.versionNeeded).toBe(45); // ZIP64 version
     });
@@ -307,8 +305,8 @@ describe("Binary Format", () => {
       expect(locator.signature).toBe(
         Zip64EndOfCentralDirectoryLocator.SIGNATURE,
       );
-      expect(locator.zip64EOCDRDisk).toBe(0); // Disk number
-      expect(locator.zip64EOCDROffset).toBe(3000n); // Disk number
+      expect(locator.eocd64Disk).toBe(0); // Disk number
+      expect(locator.eocd64Offset).toBe(3000); // Disk number
       expect(locator.totalDisks).toBe(1);
     });
   });
@@ -336,9 +334,9 @@ describe("Binary Format", () => {
         centralDirOffset,
         centralDirSize,
       );
-      const record = new EndOfCentralDirectory(recordBuffer.buffer);
+      const record = new EndOfCentralDirectoryRecord(recordBuffer.buffer);
 
-      expect(record.signature).toBe(EndOfCentralDirectory.SIGNATURE);
+      expect(record.signature).toBe(EndOfCentralDirectoryRecord.SIGNATURE);
       expect(record.diskNumber).toBe(0);
       expect(record.centralDirectoryDisk).toBe(0);
       expect(record.entriesOnDisk).toBe(totalEntries);
@@ -347,36 +345,6 @@ describe("Binary Format", () => {
       expect(record.centralDirectoryOffset).toBe(centralDirOffset);
       expect(record.commentLength).toBe(0);
       expect(record.comment).toBe("");
-    });
-  });
-
-  describe("BitFlags", () => {
-    it("should encode single flags correctly", () => {
-      expect(encodeBitFlags({ UTF8: true })).toEqual([0x00, 0x08]);
-      expect(encodeBitFlags({ DATA_DESCRIPTOR: true })).toEqual([0x08, 0x00]);
-    });
-
-    it("should encode multiple flags correctly", () => {
-      expect(
-        encodeBitFlags({
-          UTF8: true,
-          DATA_DESCRIPTOR: true,
-        }),
-      ).toEqual([0x08, 0x08]);
-    });
-
-    it("should decode flags bytes correctly", () => {
-      const flags = decodeBitFlags([0x08, 0x08]);
-      expect(flags.UTF8).toBe(true);
-      expect(flags.DATA_DESCRIPTOR).toBe(true);
-      expect(flags.ENCRYPTED).toBe(false);
-    });
-
-    it("should decode flags numbers correctly", () => {
-      const flags = decodeBitFlags(0x0808);
-      expect(flags.UTF8).toBe(true);
-      expect(flags.DATA_DESCRIPTOR).toBe(true);
-      expect(flags.ENCRYPTED).toBe(false);
     });
   });
 });

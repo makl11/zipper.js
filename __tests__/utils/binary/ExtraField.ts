@@ -66,6 +66,12 @@ export class ExtraField<
   }
 }
 
+/*
+  TODO: Make all properties optional, according to spec: The order of the fields
+        in the zip64 extended information record is fixed, but the fields MUST
+        only appear if the corresponding Local or Central directory record field
+        is set to 0xFFFF or 0xFFFFFFFF.
+*/
 /** @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT#:~:text=4.5.3%20%2DZip64%20Extended%20Information%20Extra%20Field%20(0x0001) */
 export class Zip64ExtraField<
   BufType extends ArrayBufferLike = ArrayBufferLike,
@@ -90,36 +96,56 @@ export class Zip64ExtraField<
     }
   }
 
-  get uncompressedSize(): bigint {
-    return this.view.getBigUint64(ZIP64_EXTRA_FIELD.ORIGINAL_SIZE, true);
+  get uncompressedSize(): number {
+    const value = this.view.getBigUint64(ZIP64_EXTRA_FIELD.ORIGINAL_SIZE, true);
+    // Technically this limit is incorrect but bitint values are inconvenient
+    if (value >= Number.MAX_SAFE_INTEGER) return NaN;
+    return Number(value);
   }
 
-  set uncompressedSize(value: bigint) {
-    this.view.setBigUint64(ZIP64_EXTRA_FIELD.ORIGINAL_SIZE, value, true);
+  set uncompressedSize(value: number) {
+    this.view.setBigUint64(
+      ZIP64_EXTRA_FIELD.ORIGINAL_SIZE,
+      BigInt(value),
+      true,
+    );
   }
 
-  get compressedSize(): bigint {
-    return this.view.getBigUint64(ZIP64_EXTRA_FIELD.COMPRESSED_SIZE, true);
+  get compressedSize(): number {
+    const value = this.view.getBigUint64(
+      ZIP64_EXTRA_FIELD.COMPRESSED_SIZE,
+      true,
+    );
+    // Technically this limit is incorrect but bitint values are inconvenient
+    if (value >= Number.MAX_SAFE_INTEGER) return NaN;
+    return Number(value);
   }
 
-  set compressedSize(value: bigint) {
-    this.view.setBigUint64(ZIP64_EXTRA_FIELD.COMPRESSED_SIZE, value, true);
+  set compressedSize(value: number) {
+    this.view.setBigUint64(
+      ZIP64_EXTRA_FIELD.COMPRESSED_SIZE,
+      BigInt(value),
+      true,
+    );
   }
 
-  get relativeHeaderOffset(): bigint | null {
+  get relativeHeaderOffset(): number | null {
     if (this.isLFH) {
       console.warn(
         "ZIP64 relative header offset is not supported for local file headers",
       );
       return null;
     }
-    return this.view.getBigUint64(
+    const value = this.view.getBigUint64(
       ZIP64_EXTRA_FIELD.RELATIVE_HEADER_OFFSET,
       true,
     );
+    // Technically this limit is incorrect but bitint values are inconvenient
+    if (value >= Number.MAX_SAFE_INTEGER) return NaN;
+    return Number(value);
   }
 
-  set relativeHeaderOffset(value: bigint) {
+  set relativeHeaderOffset(value: number) {
     if (this.isLFH) {
       console.warn(
         "ZIP64 relative header offset is not supported for local file headers",
@@ -128,7 +154,7 @@ export class Zip64ExtraField<
     }
     this.view.setBigUint64(
       ZIP64_EXTRA_FIELD.RELATIVE_HEADER_OFFSET,
-      value,
+      BigInt(value),
       true,
     );
   }
@@ -154,27 +180,23 @@ export class Zip64ExtraField<
   }
 
   static createLFH(
-    originalSize?: bigint | number,
-    compressedSize?: bigint | number,
+    originalSize?: number,
+    compressedSize?: number,
   ): Zip64ExtraField {
     const initData = new Uint8Array(
       ExtraField.SIZE + Zip64ExtraField.DATA_SIZE_LFH,
     );
     initData.set([0x01, 0x00, Zip64ExtraField.DATA_SIZE_LFH, 0x00]);
     const field = new Zip64ExtraField(initData.buffer, 0);
-    if (originalSize !== undefined) {
-      field.uncompressedSize = BigInt(originalSize);
-    }
-    if (compressedSize !== undefined) {
-      field.compressedSize = BigInt(compressedSize);
-    }
+    if (originalSize !== undefined) field.uncompressedSize = originalSize;
+    if (compressedSize !== undefined) field.compressedSize = compressedSize;
     return field;
   }
 
   static createCDH(
-    originalSize?: bigint | number,
-    compressedSize?: bigint | number,
-    relativeHeaderOffset?: bigint | number,
+    originalSize?: number,
+    compressedSize?: number,
+    relativeHeaderOffset?: number,
     diskStartNumber?: number,
   ): Zip64ExtraField {
     const initData = new Uint8Array(
@@ -182,15 +204,10 @@ export class Zip64ExtraField<
     );
     initData.set([0x01, 0x00, Zip64ExtraField.DATA_SIZE_CDH, 0x00]);
     const field = new Zip64ExtraField(initData.buffer, 0);
-    if (originalSize !== undefined) {
-      field.uncompressedSize = BigInt(originalSize);
-    }
-    if (compressedSize !== undefined) {
-      field.compressedSize = BigInt(compressedSize);
-    }
-    if (relativeHeaderOffset !== undefined) {
-      field.relativeHeaderOffset = BigInt(relativeHeaderOffset);
-    }
+    if (originalSize !== undefined) field.uncompressedSize = originalSize;
+    if (compressedSize !== undefined) field.compressedSize = compressedSize;
+    if (relativeHeaderOffset !== undefined)
+      field.relativeHeaderOffset = relativeHeaderOffset;
     if (diskStartNumber !== undefined) field.diskStartNumber = diskStartNumber;
     return field;
   }

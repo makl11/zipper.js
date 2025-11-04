@@ -2,8 +2,8 @@ import { ZIP64_END_OF_CENTRAL_DIR_LOCATOR } from "./constants/offsets.js";
 
 const {
   SIGNATURE: SIGNATURE_OFFSET,
-  DISK_NUMBER,
-  CD_OFFSET,
+  EOCD64_DISK_NUMBER: DISK_NUMBER,
+  EOCD64_OFFSET: CD_OFFSET,
   TOTAL_DISKS,
 } = ZIP64_END_OF_CENTRAL_DIR_LOCATOR;
 
@@ -32,18 +32,21 @@ export class Zip64EndOfCentralDirectoryLocator<
     return this.getUint32(SIGNATURE_OFFSET, true);
   }
 
-  get zip64EOCDRDisk(): number {
+  get eocd64Disk(): number {
     return this.getUint32(DISK_NUMBER, true);
   }
-  set zip64EOCDRDisk(value: number) {
+  set eocd64Disk(value: number) {
     this.setUint32(DISK_NUMBER, value, true);
   }
 
-  get zip64EOCDROffset(): bigint {
-    return this.getBigUint64(CD_OFFSET, true);
+  get eocd64Offset(): number {
+    const value = this.getBigUint64(CD_OFFSET, true);
+    // Technically this limit is incorrect but bigint values are inconvenient
+    if (value >= Number.MAX_SAFE_INTEGER) return NaN;
+    return Number(value);
   }
-  set zip64EOCDROffset(value: bigint) {
-    this.setBigUint64(CD_OFFSET, value, true);
+  set eocd64Offset(value: number) {
+    this.setBigUint64(CD_OFFSET, BigInt(value), true);
   }
 
   get totalDisks(): number {

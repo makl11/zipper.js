@@ -5,12 +5,12 @@ import {
   ZIP_VERSION,
 } from "./utils/binary/constants/versions.js";
 import {
-  CentralDirectoryHeader,
+  CentralDirectoryFileHeader,
   DataDescriptor,
-  EndOfCentralDirectory,
+  EndOfCentralDirectoryRecord,
   LocalFileHeader,
-  Zip64EndOfCentralDirectory,
   Zip64EndOfCentralDirectoryLocator,
+  Zip64EndOfCentralDirectoryRecord,
 } from "./utils/binary/index.js";
 import { DIR, FILE, LARGE_FILE } from "./utils/test_data.js";
 import { collectChunks, concatUint8Arrays } from "./utils/test_utils.js";
@@ -36,8 +36,8 @@ describe("File Content", () => {
 
       // There should be no data between the local file header and the central directory header
 
-      const cdh = new CentralDirectoryHeader(stream.buffer, lfh.byteLength);
-      expect(cdh.signature).toBe(CentralDirectoryHeader.SIGNATURE);
+      const cdh = new CentralDirectoryFileHeader(stream.buffer, lfh.byteLength);
+      expect(cdh.signature).toBe(CentralDirectoryFileHeader.SIGNATURE);
       expect(cdh.uncompressedSize).toBe(0);
       expect(cdh.compressedSize).toBe(0);
       expect(cdh.crc32).toBe(0);
@@ -65,11 +65,11 @@ describe("File Content", () => {
       expect(data.getUint8(FILE.size - 1)).toBe(65);
       expect(data.getUint8(FILE.size)).not.toBe(65);
 
-      const cdh = new CentralDirectoryHeader(
+      const cdh = new CentralDirectoryFileHeader(
         stream.buffer,
         lfh.byteLength + FILE.size,
       );
-      expect(cdh.signature).toBe(CentralDirectoryHeader.SIGNATURE);
+      expect(cdh.signature).toBe(CentralDirectoryFileHeader.SIGNATURE);
       expect(cdh.uncompressedSize).toBe(FILE.size);
       expect(cdh.compressedSize).toBe(FILE.size);
       expect(cdh.crc32).toBe(FILE.crc);
@@ -208,11 +208,11 @@ describe("File Content", () => {
       expect(data.getUint8(LARGE_FILE.size - 1)).toBe(65);
       expect(data.getUint8(LARGE_FILE.size)).not.toBe(65);
 
-      const cdh = new CentralDirectoryHeader(
+      const cdh = new CentralDirectoryFileHeader(
         stream.buffer,
         data.byteOffset + LARGE_FILE.size,
       );
-      expect(cdh.signature).toBe(CentralDirectoryHeader.SIGNATURE);
+      expect(cdh.signature).toBe(CentralDirectoryFileHeader.SIGNATURE);
     });
 
     it("should handle streamed content larger than 4GB with ZIP64", async () => {
@@ -275,42 +275,42 @@ describe("File Content", () => {
       }
 
       for (let i = 0; i < fileCount; i++) {
-        const cdh = new CentralDirectoryHeader(stream.buffer, offset);
-        expect(cdh.signature).toBe(CentralDirectoryHeader.SIGNATURE);
+        const cdh = new CentralDirectoryFileHeader(stream.buffer, offset);
+        expect(cdh.signature).toBe(CentralDirectoryFileHeader.SIGNATURE);
         expect(cdh.versionNeeded).toBe(ZIP_VERSION.V2_0);
         expect(cdh.filename).toBe(`file${i}.txt`);
-        expect(cdh.localHeaderOffset).toBe(lfhOffsets[i]);
+        expect(cdh.localFileHeaderOffset).toBe(lfhOffsets[i]);
         expect(cdh.extraFieldLength).toBe(0); // Expect no ZIP64ExtraField in LFH
         offset += cdh.byteLength;
       }
 
-      let eocd: EndOfCentralDirectory;
+      let eocd: EndOfCentralDirectoryRecord;
       expect(() => {
-        eocd = EndOfCentralDirectory.find(stream.buffer);
+        eocd = EndOfCentralDirectoryRecord.find(stream.buffer);
       }).not.toThrow();
-      expect(eocd!.signature).toBe(EndOfCentralDirectory.SIGNATURE);
+      expect(eocd!.signature).toBe(EndOfCentralDirectoryRecord.SIGNATURE);
       expect(eocd!.entriesOnDisk).toBe(0xffff);
       expect(eocd!.totalEntries).toBe(0xffff);
       expect(eocd!.centralDirectorySize).toBe(0xffffffff);
       expect(eocd!.centralDirectoryOffset).toBe(0xffffffff);
 
-      const z64EocdLocator = new Zip64EndOfCentralDirectoryLocator(
+      const eocd64Locator = new Zip64EndOfCentralDirectoryLocator(
         stream.buffer,
         eocd!.byteOffset - Zip64EndOfCentralDirectoryLocator.SIZE,
       );
-      expect(z64EocdLocator.signature).toBe(
+      expect(eocd64Locator.signature).toBe(
         Zip64EndOfCentralDirectoryLocator.SIGNATURE,
       );
-      expect(z64EocdLocator.zip64EOCDRDisk).toBe(0);
-      expect(z64EocdLocator.totalDisks).toBe(1);
+      expect(eocd64Locator.eocd64Disk).toBe(0);
+      expect(eocd64Locator.totalDisks).toBe(1);
 
-      const z64Eocd = new Zip64EndOfCentralDirectory(
+      const eocd64 = new Zip64EndOfCentralDirectoryRecord(
         stream.buffer,
-        Number(z64EocdLocator.zip64EOCDROffset),
+        Number(eocd64Locator.eocd64Offset),
       );
-      expect(z64Eocd.signature).toBe(Zip64EndOfCentralDirectory.SIGNATURE);
-      expect(z64Eocd.entriesOnDisk).toBe(BigInt(fileCount));
-      expect(z64Eocd.totalEntries).toBe(BigInt(fileCount));
+      expect(eocd64.signature).toBe(Zip64EndOfCentralDirectoryRecord.SIGNATURE);
+      expect(eocd64.entriesOnDisk).toBe(fileCount);
+      expect(eocd64.totalEntries).toBe(fileCount);
     });
   });
 });
