@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 import Zipper from "../src/index.js";
-import {
-  FEATURES_VERSION,
-  ZIP_VERSION,
-} from "./utils/binary/constants/versions.js";
+import { FEATURES_VERSION, ZIP_VERSION } from "./binary/constants/versions.js";
 import {
   CentralDirectoryFileHeader,
   DataDescriptor,
@@ -11,7 +8,7 @@ import {
   LocalFileHeader,
   Zip64EndOfCentralDirectoryLocator,
   Zip64EndOfCentralDirectoryRecord,
-} from "./utils/binary/index.js";
+} from "./binary/index.js";
 import { DIR, FILE, LARGE_FILE } from "./utils/test_data.js";
 import { collectChunks, concatUint8Arrays } from "./utils/test_utils.js";
 

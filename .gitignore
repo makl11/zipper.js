@@ -138,3 +138,6 @@ dist
 
 # generated large bin files
 *.bin
+
+# general
+.DS_Store

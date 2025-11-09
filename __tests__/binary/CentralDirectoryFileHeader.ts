@@ -3,7 +3,7 @@ import { DOS_ATTRS, UNIX_PERMISSIONS } from "./constants/externalAttrs.js";
 import { CENTRAL_DIRECTORY_FILE_HEADER } from "./constants/offsets.js";
 import { ZIP_VERSION } from "./constants/versions.js";
 
-import type { ZipEntry } from "../../../src/index.js";
+import type { ZipEntry } from "../../src/index.js";
 import {
   decodeBitFlags,
   encodeBitFlags,

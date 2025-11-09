@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import Zipper from "../src/index.js";
-import { LocalFileHeader } from "./utils/binary/LocalFileHeader.js";
+import { LocalFileHeader } from "./binary/LocalFileHeader.js";
 import { collectChunks, concatUint8Arrays } from "./utils/test_utils.js";
 
 describe("Path Handling", () => {
