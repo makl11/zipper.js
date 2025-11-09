@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { FILE } from "../utils/test_data.js";
+import { FILE } from "../utils/test_data";
 
-import Zipper from "../../src/index.js";
-import { DataDescriptor } from "./DataDescriptor.js";
+import Zipper from "../../src/index";
+import { DataDescriptor } from "./DataDescriptor";
 
 describe("Data Descriptor", () => {
   it("should generate correct data descriptor for streamed files", () => {

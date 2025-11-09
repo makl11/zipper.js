@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { DIR, FILE } from "./utils/test_data.js";
-import { collectChunks, writeChunksToFile } from "./utils/test_utils.js";
+import { DIR, FILE } from "./utils/test_data";
+import { collectChunks, writeChunksToFile } from "./utils/test_utils";
 
-import Zipper from "../src/index.js";
+import Zipper from "../src/index";
 
 describe("Size Prediction", { sequential: true }, () => {
   it("should update predicted size when adding new files", async () => {

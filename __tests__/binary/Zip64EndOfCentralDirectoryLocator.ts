@@ -1,4 +1,4 @@
-import { ZIP64_END_OF_CENTRAL_DIR_LOCATOR } from "./constants/offsets.js";
+import { ZIP64_END_OF_CENTRAL_DIR_LOCATOR } from "./constants/offsets";
 
 const {
   SIGNATURE: SIGNATURE_OFFSET,

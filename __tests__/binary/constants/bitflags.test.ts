@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { BIT_FLAGS, decodeBitFlags, encodeBitFlags } from "./bitflags.js";
+import { BIT_FLAGS, decodeBitFlags, encodeBitFlags } from "./bitflags";
 
 describe("BitFlags", () => {
   it("should encode single flags correctly", () => {

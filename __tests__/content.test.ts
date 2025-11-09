@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import Zipper from "../src/index.js";
-import { FEATURES_VERSION } from "./binary/constants/versions.js";
+import Zipper from "../src/index";
+import { FEATURES_VERSION } from "./binary/constants/versions";
 import {
   CentralDirectoryFileHeader,
   DataDescriptor,
@@ -8,9 +8,9 @@ import {
   LocalFileHeader,
   Zip64EndOfCentralDirectoryLocator,
   Zip64EndOfCentralDirectoryRecord,
-} from "./binary/index.js";
-import { DIR, FILE, LARGE_FILE } from "./utils/test_data.js";
-import { collectChunks, concatUint8Arrays } from "./utils/test_utils.js";
+} from "./binary/index";
+import { DIR, FILE, LARGE_FILE } from "./utils/test_data";
+import { collectChunks, concatUint8Arrays } from "./utils/test_utils";
 
 describe("File Content", () => {
   describe("Content Types", () => {

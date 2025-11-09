@@ -1,5 +1,5 @@
-import { ZIP64_END_OF_CENTRAL_DIR } from "./constants/offsets.js";
-import { ZIP_VERSION } from "./constants/versions.js";
+import { ZIP64_END_OF_CENTRAL_DIR } from "./constants/offsets";
+import { ZIP_VERSION } from "./constants/versions";
 
 const {
   SIGNATURE: SIGNATURE_OFFSET,

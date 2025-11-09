@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import Zipper from "../../src/index.js";
-import { EndOfCentralDirectoryRecord } from "./EndOfCentralDirectoryRecord.js";
+import Zipper from "../../src/index";
+import { EndOfCentralDirectoryRecord } from "./EndOfCentralDirectoryRecord";
 
 describe("End of Central Directory", () => {
   it("should generate correct EOCD structure", () => {

@@ -1,4 +1,4 @@
-import { END_OF_CENTRAL_DIR } from "./constants/offsets.js";
+import { END_OF_CENTRAL_DIR } from "./constants/offsets";
 
 const {
   SIGNATURE: SIGNATURE_OFFSET,

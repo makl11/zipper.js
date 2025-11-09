@@ -2,10 +2,10 @@ import {
   decodeBitFlags,
   encodeBitFlags,
   type BitFlagOptions,
-} from "./constants/bitflags.js";
-import { LOCAL_FILE_HEADER } from "./constants/offsets.js";
-import { ZIP_VERSION } from "./constants/versions.js";
-import { ExtraField } from "./ExtraField.js";
+} from "./constants/bitflags";
+import { LOCAL_FILE_HEADER } from "./constants/offsets";
+import { ZIP_VERSION } from "./constants/versions";
+import { ExtraField } from "./ExtraField/index";
 
 const {
   SIGNATURE: SIGNATURE_OFFSET,

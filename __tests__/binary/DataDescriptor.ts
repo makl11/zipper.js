@@ -1,4 +1,4 @@
-import { DATA_DESCRIPTOR } from "./constants/offsets.js";
+import { DATA_DESCRIPTOR } from "./constants/offsets";
 
 const {
   SIGNATURE: SIGNATURE_OFFSET,

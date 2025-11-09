@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { FEATURES_VERSION } from "./constants/versions.js";
+import { FEATURES_VERSION } from "./constants/versions";
 
-import { DIR, FILE } from "../utils/test_data.js";
+import { DIR, FILE } from "../utils/test_data";
 
-import type { ZipFileStream } from "../../src/index.js";
-import Zipper from "../../src/index.js";
+import type { ZipFileStream } from "../../src/index";
+import Zipper from "../../src/index";
 
-import { COMPRESSION } from "./constants/compression.js";
-import { ExtraField, Zip64ExtraField } from "./ExtraField.js";
-import { LocalFileHeader } from "./LocalFileHeader.js";
+import { COMPRESSION } from "./constants/compression";
+import { Zip64ExtraField } from "./ExtraField/Zip64ExtraField";
+import { LocalFileHeader } from "./LocalFileHeader";
 
 describe("Local File Header", () => {
   it("should generate correct header structure for basic file", () => {
@@ -116,10 +116,12 @@ describe("Local File Header", () => {
     expect(header.signature).toBe(LocalFileHeader.SIGNATURE);
     expect(header.versionNeeded).toBe(FEATURES_VERSION.ZIP64);
     expect(header.extraFieldLength).toBe(
-      ExtraField.SIZE + Zip64ExtraField.DATA_SIZE_LFH,
+      Zip64ExtraField.BASE_SIZE + Zip64ExtraField.DATA_SIZE_LFH,
     );
 
-    const zip64Field = header.extraFields.find(ExtraField.isZip64);
+    const zip64Field = header.extraFields
+      .find((f) => f.is(Zip64ExtraField))
+      ?.as(Zip64ExtraField);
     expect(zip64Field).toBeDefined();
     expect(zip64Field!.dataSize).toBe(Zip64ExtraField.DATA_SIZE_LFH);
     expect(zip64Field!.compressedSize).toBe(largeFile.size);

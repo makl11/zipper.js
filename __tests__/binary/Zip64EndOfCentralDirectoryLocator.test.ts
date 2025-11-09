@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import Zipper from "../../src/index.js";
-import { Zip64EndOfCentralDirectoryLocator } from "./Zip64EndOfCentralDirectoryLocator.js";
+import Zipper from "../../src/index";
+import { Zip64EndOfCentralDirectoryLocator } from "./Zip64EndOfCentralDirectoryLocator";
 
 describe("ZIP64 End of Central Directory Locator", () => {
   it("should generate correct ZIP64 EOCD Locator structure", () => {

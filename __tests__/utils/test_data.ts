@@ -1,5 +1,5 @@
 import crc32 from "crc/crc32";
-import type { _ZipEntry } from "../../src/index.js";
+import type { _ZipEntry } from "../../src/index";
 
 /** This file is 128KB */
 export const FILE = {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import Zipper from "../src/index.js";
-import { LocalFileHeader } from "./binary/LocalFileHeader.js";
-import { collectChunks, concatUint8Arrays } from "./utils/test_utils.js";
+import Zipper from "../src/index";
+import { LocalFileHeader } from "./binary/LocalFileHeader";
+import { collectChunks, concatUint8Arrays } from "./utils/test_utils";
 
 describe("Path Handling", () => {
   describe("Basic Path Validation", () => {

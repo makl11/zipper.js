@@ -1,14 +1,14 @@
-import { ExtraField } from "./ExtraField.js";
-import { DOS_ATTRS, UNIX_PERMISSIONS } from "./constants/externalAttrs.js";
-import { CENTRAL_DIRECTORY_FILE_HEADER } from "./constants/offsets.js";
-import { ZIP_VERSION } from "./constants/versions.js";
+import { ExtraField } from "./ExtraField";
+import { DOS_ATTRS, UNIX_PERMISSIONS } from "./constants/externalAttrs";
+import { CENTRAL_DIRECTORY_FILE_HEADER } from "./constants/offsets";
+import { ZIP_VERSION } from "./constants/versions";
 
-import type { ZipEntry } from "../../src/index.js";
+import type { ZipEntry } from "../../src/index";
 import {
   decodeBitFlags,
   encodeBitFlags,
   type BitFlagOptions,
-} from "./constants/bitflags.js";
+} from "./constants/bitflags";
 
 const {
   SIGNATURE: SIGNATURE_OFFSET,

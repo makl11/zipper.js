@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { FEATURES_VERSION } from "./constants/versions.js";
+import { FEATURES_VERSION } from "./constants/versions";
 
-import { FILE, LARGE_FILE } from "../utils/test_data.js";
+import { FILE, LARGE_FILE } from "../utils/test_data";
 
-import Zipper from "../../src/index.js";
-import { CentralDirectoryFileHeader } from "./CentralDirectoryFileHeader.js";
-import { ExtraField, Zip64ExtraField } from "./ExtraField.js";
-import { COMPRESSION } from "./constants/compression.js";
+import Zipper from "../../src/index";
+import { CentralDirectoryFileHeader } from "./CentralDirectoryFileHeader";
+import { COMPRESSION } from "./constants/compression";
+import { Zip64ExtraField } from "./ExtraField/Zip64ExtraField";
 
 describe("Central Directory File Header", () => {
   it("should generate correct central directory entry for files", () => {
@@ -61,7 +61,9 @@ describe("Central Directory File Header", () => {
     expect(header.compressedSize).toBe(0xffffffff);
     expect(header.uncompressedSize).toBe(0xffffffff);
 
-    const zip64Field = header.extraFields.find(ExtraField.isZip64);
+    const zip64Field = header.extraFields
+      .find((f) => f.is(Zip64ExtraField))
+      ?.as(Zip64ExtraField);
     expect(zip64Field).toBeDefined();
     expect(zip64Field!.dataSize).toBe(Zip64ExtraField.DATA_SIZE_CDH);
     expect(zip64Field!.compressedSize).toBe(LARGE_FILE.size);

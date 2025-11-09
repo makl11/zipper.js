@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import Zipper from "../../src/index.js";
-import { Zip64EndOfCentralDirectoryRecord } from "./Zip64EndOfCentralDirectoryRecord.js";
+import Zipper from "../../src/index";
+import { Zip64EndOfCentralDirectoryRecord } from "./Zip64EndOfCentralDirectoryRecord";
 
 describe("ZIP64 End of Central Directory Record", () => {
   it("should generate correct ZIP64 EOCD Record structure", () => {

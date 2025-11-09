@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { FILE } from "./utils/test_data.js";
-import { collectChunks } from "./utils/test_utils.js";
+import { FILE } from "./utils/test_data";
+import { collectChunks } from "./utils/test_utils";
 
-import Zipper from "../src/index.js";
+import Zipper from "../src/index";
 
 describe("Stream Handling", () => {
   describe("Basic Stream Operations", () => {

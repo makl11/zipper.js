@@ -2,7 +2,7 @@
 
 import { createReadStream, createWriteStream, rmSync, statSync } from "node:fs";
 import { Readable, Writable } from "node:stream";
-import Zipper from "./src/index.js";
+import Zipper from "./src/index";
 
 const OUTFILE = "./out.zip";
 

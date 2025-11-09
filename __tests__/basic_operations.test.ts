@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { DIR, FILE } from "./utils/test_data.js";
-import { collectChunks } from "./utils/test_utils.js";
+import { DIR, FILE } from "./utils/test_data";
+import { collectChunks } from "./utils/test_utils";
 
-import Zipper from "../src/index.js";
+import Zipper from "../src/index";
 
 describe("Basic Functionality", () => {
   describe("Basic ZIP Operations", () => {
