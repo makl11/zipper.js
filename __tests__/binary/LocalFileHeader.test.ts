@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { FEATURES_VERSION, ZIP_VERSION } from "./constants/versions.js";
+import { FEATURES_VERSION } from "./constants/versions.js";
 
 import { DIR, FILE } from "../utils/test_data.js";
 
@@ -20,7 +20,7 @@ describe("Local File Header", () => {
 
     // Verify every field in the header
     expect(header.signature).toBe(LocalFileHeader.SIGNATURE);
-    expect(header.versionNeeded).toBe(ZIP_VERSION.V2_0); // Base version
+    expect(header.versionNeeded).toBe(FEATURES_VERSION.BASE); // Base version
     expect(Object.values(header.flags)).not.toContain(true); // No flags set for basic storage
     expect(header.compression).toBe(COMPRESSION.STORE); // No compression
 

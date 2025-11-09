@@ -39,6 +39,7 @@ export enum ZIP_VERSION {
  * @enum {number}
  */
 export enum FEATURES_VERSION {
+  BASE = ZIP_VERSION.V1_0,
   /** Directories */
   DIRS = ZIP_VERSION.V2_0,
   /** No compression */

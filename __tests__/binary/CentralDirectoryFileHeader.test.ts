@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { FEATURES_VERSION, ZIP_VERSION } from "./constants/versions.js";
+import { FEATURES_VERSION } from "./constants/versions.js";
 
 import { FILE, LARGE_FILE } from "../utils/test_data.js";
 
@@ -23,7 +23,7 @@ describe("Central Directory File Header", () => {
 
     // Verify every field in the central directory entry
     expect(header.signature).toBe(CentralDirectoryFileHeader.SIGNATURE);
-    expect(header.versionNeeded).toBe(ZIP_VERSION.V2_0); // Base version
+    expect(header.versionNeeded).toBe(FEATURES_VERSION.BASE); // Base version
     expect(Object.values(header.flags)).not.toContain(true); // No flags set for basic storage
     expect(header.compression).toBe(COMPRESSION.STORE);
     expect(header.lastModifiedTime).toBe(0x6000); // 12:00:00

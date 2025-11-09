@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import Zipper from "../src/index.js";
-import { FEATURES_VERSION, ZIP_VERSION } from "./binary/constants/versions.js";
+import { FEATURES_VERSION } from "./binary/constants/versions.js";
 import {
   CentralDirectoryFileHeader,
   DataDescriptor,
@@ -260,7 +260,7 @@ describe("File Content", () => {
         lfhOffsets.push(offset);
         const lfh = new LocalFileHeader(stream.buffer, offset);
         expect(lfh.signature).toBe(LocalFileHeader.SIGNATURE);
-        expect(lfh.versionNeeded).toBe(ZIP_VERSION.V2_0);
+        expect(lfh.versionNeeded).toBe(FEATURES_VERSION.BASE);
         expect(lfh.filename).toBe(`file${i}.txt`);
         expect(lfh.extraFieldLength).toBe(0); // Expect no ZIP64ExtraField in LFH
         offset += lfh.byteLength;
@@ -274,7 +274,7 @@ describe("File Content", () => {
       for (let i = 0; i < fileCount; i++) {
         const cdh = new CentralDirectoryFileHeader(stream.buffer, offset);
         expect(cdh.signature).toBe(CentralDirectoryFileHeader.SIGNATURE);
-        expect(cdh.versionNeeded).toBe(ZIP_VERSION.V2_0);
+        expect(cdh.versionNeeded).toBe(FEATURES_VERSION.BASE);
         expect(cdh.filename).toBe(`file${i}.txt`);
         expect(cdh.localFileHeaderOffset).toBe(lfhOffsets[i]);
         expect(cdh.extraFieldLength).toBe(0); // Expect no ZIP64ExtraField in LFH
