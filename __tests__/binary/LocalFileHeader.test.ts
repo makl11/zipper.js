@@ -24,8 +24,8 @@ describe("Local File Header", () => {
     expect(Object.values(header.flags)).not.toContain(true); // No flags set for basic storage
     expect(header.compression).toBe(COMPRESSION.STORE); // No compression
 
-    expect(header.lastModifiedTime).toBe(0x6000);
-    expect(header.lastModifiedDate).toBe(0x5821);
+    expect(header.lastModifiedTime).toBe(0x6000); // 12:00:00
+    expect(header.lastModifiedDate).toBe(0x5821); // 2024-01-01
     expect(header.crc32).toBe(FILE.crc);
     expect(header.compressedSize).toBe(FILE.size);
     expect(header.uncompressedSize).toBe(FILE.size);

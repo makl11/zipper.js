@@ -141,3 +141,7 @@ dist
 
 # general
 .DS_Store
+
+# MSVC Artifacts
+*.obj
+*.exe
