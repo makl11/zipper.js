@@ -7,6 +7,7 @@ import { FILE, LARGE_FILE } from "../utils/test_data.js";
 import Zipper from "../../src/index.js";
 import { CentralDirectoryFileHeader } from "./CentralDirectoryFileHeader.js";
 import { ExtraField, Zip64ExtraField } from "./ExtraField.js";
+import { COMPRESSION } from "./constants/compression.js";
 
 describe("Central Directory File Header", () => {
   it("should generate correct central directory entry for files", () => {
@@ -24,7 +25,7 @@ describe("Central Directory File Header", () => {
     expect(header.signature).toBe(CentralDirectoryFileHeader.SIGNATURE);
     expect(header.versionNeeded).toBe(ZIP_VERSION.V2_0); // Base version
     expect(Object.values(header.flags)).not.toContain(true); // No flags set for basic storage
-    expect(header.compression).toBe(0x0000);
+    expect(header.compression).toBe(COMPRESSION.STORE);
     expect(header.lastModifiedTime).toBe(0x6000); // 12:00:00
     expect(header.lastModifiedDate).toBe(0x5821); // 2024-01-01
     expect(header.crc32).toBe(FILE.crc);

@@ -7,6 +7,7 @@ import { DIR, FILE } from "../utils/test_data.js";
 import type { ZipFileStream } from "../../src/index.js";
 import Zipper from "../../src/index.js";
 
+import { COMPRESSION } from "./constants/compression.js";
 import { ExtraField, Zip64ExtraField } from "./ExtraField.js";
 import { LocalFileHeader } from "./LocalFileHeader.js";
 
@@ -21,7 +22,7 @@ describe("Local File Header", () => {
     expect(header.signature).toBe(LocalFileHeader.SIGNATURE);
     expect(header.versionNeeded).toBe(ZIP_VERSION.V2_0); // Base version
     expect(Object.values(header.flags)).not.toContain(true); // No flags set for basic storage
-    expect(header.compression).toBe(0x0000); // No compression
+    expect(header.compression).toBe(COMPRESSION.STORE); // No compression
 
     expect(header.lastModifiedTime).toBe(0x6000);
     expect(header.lastModifiedDate).toBe(0x5821);
@@ -29,8 +30,8 @@ describe("Local File Header", () => {
     expect(header.compressedSize).toBe(FILE.size);
     expect(header.uncompressedSize).toBe(FILE.size);
     expect(header.filenameLength).toBe(FILE.name.length); // "test.txt".length
-    expect(header.filename).toBe(FILE.name);
     expect(header.extraFieldLength).toBe(0); // No extra fields for basic file
+    expect(header.filename).toBe(FILE.name);
     expect(header.byteLength).toBe(LocalFileHeader.SIZE + FILE.name.length + 0);
   });
 
@@ -64,7 +65,7 @@ describe("Local File Header", () => {
     expect(header.flags.UTF8).toBe(true);
     // "test.txt" = 8 + "´" = 1 or "tst.txt" = 7 + "é" = 2
     expect(header.filenameLength).toBe(9);
-    expect(header.filename).toBe("tést.txt");
+    expect(header.filename).toBe(file.path);
   });
 
   it("should handle directory entries with correct attributes", () => {
@@ -74,12 +75,13 @@ describe("Local File Header", () => {
     const header = new LocalFileHeader(headerBuffer.buffer);
 
     expect(header.signature).toBe(LocalFileHeader.SIGNATURE);
+    expect(header.compression).toBe(COMPRESSION.STORE);
     expect(header.compressedSize).toBe(0);
     expect(header.uncompressedSize).toBe(0);
 
     expect(header.versionNeeded).toBe(FEATURES_VERSION.DIRS);
 
-    expect(header.filename).toBe("test-dir/");
+    expect(header.filename).toBe(DIR.name);
   });
 
   it("should handle nested directory paths", () => {
