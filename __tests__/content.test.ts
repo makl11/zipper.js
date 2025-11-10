@@ -190,7 +190,11 @@ describe("File Content", () => {
     it("should switch to ZIP64 for files larger than 4GB", async () => {
       const zipper = new Zipper();
 
-      zipper.add({ ...LARGE_FILE }, LARGE_FILE.data, LARGE_FILE.size);
+      const dataBuffer = await collectChunks(LARGE_FILE.data).then(
+        concatUint8Arrays,
+      );
+
+      zipper.add({ ...LARGE_FILE }, dataBuffer);
 
       const stream = await collectChunks(zipper.stream()).then(
         concatUint8Arrays,
