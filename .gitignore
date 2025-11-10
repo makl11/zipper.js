@@ -138,3 +138,10 @@ dist
 
 # generated large bin files
 *.bin
+
+# general
+.DS_Store
+
+# MSVC Artifacts
+*.obj
+*.exe

@@ -1,4 +1,4 @@
-import { END_OF_CENTRAL_DIR } from "./constants/offsets.js";
+import { END_OF_CENTRAL_DIR } from "./constants/offsets";
 
 const {
   SIGNATURE: SIGNATURE_OFFSET,
@@ -6,35 +6,39 @@ const {
   DISK_WITH_CD_START,
   ENTRIES_ON_DISK,
   TOTAL_ENTRIES,
-  SIZE,
-  OFFSET,
+  CENTRAL_DIRECTORY_SIZE,
+  CENTRAL_DIRECTORY_OFFSET,
   COMMENT_LENGTH,
   COMMENT_START,
 } = END_OF_CENTRAL_DIR;
 
-export class EndOfCentralDirectory<
+export class EndOfCentralDirectoryRecord<
   BufType extends ArrayBufferLike = ArrayBufferLike,
 > extends DataView<BufType> {
   static readonly SIGNATURE = 0x06054b50;
   static readonly SIZE = 22;
 
-  static create(): EndOfCentralDirectory {
-    const buffer = new ArrayBuffer(EndOfCentralDirectory.SIZE);
+  static create(): EndOfCentralDirectoryRecord {
+    const buffer = new ArrayBuffer(EndOfCentralDirectoryRecord.SIZE);
     const view = new DataView(buffer);
-    view.setUint32(SIGNATURE_OFFSET, EndOfCentralDirectory.SIGNATURE, true);
-    return new EndOfCentralDirectory(buffer);
+    view.setUint32(
+      SIGNATURE_OFFSET,
+      EndOfCentralDirectoryRecord.SIGNATURE,
+      true,
+    );
+    return new EndOfCentralDirectoryRecord(buffer);
   }
 
   static find<BufType extends ArrayBufferLike = ArrayBufferLike>(
     buffer: BufType,
-  ): EndOfCentralDirectory<BufType> {
+  ): EndOfCentralDirectoryRecord<BufType> {
     // TODO: Implement using sliding window from the end of the buffer
     // Note: Since this implementation does not allow for comments, we can use a simple approach
-    const eocd = new EndOfCentralDirectory(
+    const eocd = new EndOfCentralDirectoryRecord(
       buffer,
-      buffer.byteLength - EndOfCentralDirectory.SIZE,
+      buffer.byteLength - EndOfCentralDirectoryRecord.SIZE,
     );
-    if (eocd.signature !== EndOfCentralDirectory.SIGNATURE) {
+    if (eocd.signature !== EndOfCentralDirectoryRecord.SIGNATURE) {
       throw new Error("EndOfCentralDirectory signature not found");
     }
     return eocd;
@@ -77,17 +81,17 @@ export class EndOfCentralDirectory<
   }
 
   get centralDirectorySize(): number {
-    return this.getUint32(SIZE, true);
+    return this.getUint32(CENTRAL_DIRECTORY_SIZE, true);
   }
   set centralDirectorySize(value: number) {
-    this.setUint32(SIZE, value, true);
+    this.setUint32(CENTRAL_DIRECTORY_SIZE, value, true);
   }
 
   get centralDirectoryOffset(): number {
-    return this.getUint32(OFFSET, true);
+    return this.getUint32(CENTRAL_DIRECTORY_OFFSET, true);
   }
   set centralDirectoryOffset(value: number) {
-    this.setUint32(OFFSET, value, true);
+    this.setUint32(CENTRAL_DIRECTORY_OFFSET, value, true);
   }
 
   get commentLength(): number {
@@ -114,6 +118,6 @@ export class EndOfCentralDirectory<
   }
 
   override get byteLength(): number {
-    return EndOfCentralDirectory.SIZE + this.commentLength;
+    return EndOfCentralDirectoryRecord.SIZE + this.commentLength;
   }
 }

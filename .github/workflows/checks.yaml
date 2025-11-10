@@ -79,4 +79,4 @@ jobs:
         run: npm ci
       - name: test
         timeout-minutes: 10
-        run: npm run test -- --reporter=github-actions
+        run: npm run test

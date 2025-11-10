@@ -1,10 +1,10 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import { describe, expect, it } from "vitest";
-import { FILE } from "./utils/test_data.js";
-import { collectChunks, concatUint8Arrays } from "./utils/test_utils.js";
+import { FILE } from "./utils/test_data";
+import { collectChunks, concatUint8Arrays } from "./utils/test_utils";
 
-import Zipper from "../src/index.js";
+import Zipper from "../src/index";
 
 describe.skip("HTTP Range Request Support", () => {
   describe("Basic Range Operations", () => {

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { DIR, FILE } from "./utils/test_data.js";
-import { collectChunks, writeChunksToFile } from "./utils/test_utils.js";
+import { DIR, FILE, LARGE_FILE } from "./utils/test_data";
+import { collectChunks } from "./utils/test_utils";
 
-import Zipper from "../src/index.js";
+import Zipper from "../src/index";
 
-describe("Size Prediction", { sequential: true }, () => {
+describe("Size Prediction", { timeout: 30_000 }, () => {
   it("should update predicted size when adding new files", async () => {
     const zipper = new Zipper();
 
@@ -84,29 +84,21 @@ describe("Size Prediction", { sequential: true }, () => {
     expect(totalChunksSize).toBe(predictedSize);
   });
 
-  it(
-    "should accurately predict size with ZIP64 structures",
-    {
-      timeout: 300_000,
-    },
-    async () => {
-      const zipper = new Zipper();
+  it("should accurately predict size with ZIP64 structures", async () => {
+    const zipper = new Zipper();
 
-      const content = new Uint8Array(4 * 1024 * 1024 * 1024 + 16);
-      const contentSize = content.byteLength;
-      zipper.add(FILE, new Blob([content]).stream(), contentSize);
+    zipper.add(LARGE_FILE, LARGE_FILE.data, LARGE_FILE.size);
 
-      const predictedSize = zipper.predictSize();
-      const stream = zipper.stream();
+    const predictedSize = zipper.predictSize();
+    const stream = zipper.stream();
 
-      const chunks = await collectChunks(stream);
-      const totalChunksSize = chunks.reduce(
-        (acc, chunk) => acc + chunk.byteLength,
-        0,
-      );
+    let totalChunksSize = 0;
+    await stream.pipeTo(
+      new WritableStream({
+        write: (chunk) => void (totalChunksSize += chunk.byteLength),
+      }),
+    );
 
-      await writeChunksToFile("./z64_chunks.zip", chunks);
-      expect(totalChunksSize).toBe(predictedSize);
-    },
-  );
+    expect(totalChunksSize).toBe(predictedSize);
+  });
 });

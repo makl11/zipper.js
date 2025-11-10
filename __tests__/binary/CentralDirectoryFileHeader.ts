@@ -1,9 +1,14 @@
-import { ExtraField } from "./ExtraField.js";
-import { DOS_ATTRS, UNIX_PERMISSIONS } from "./constants/externalAttrs.js";
-import { CENTRAL_DIRECTORY } from "./constants/offsets.js";
-import { ZIP_VERSION } from "./constants/versions.js";
+import { ExtraField } from "./ExtraField";
+import { DOS_ATTRS, UNIX_PERMISSIONS } from "./constants/externalAttrs";
+import { CENTRAL_DIRECTORY_FILE_HEADER } from "./constants/offsets";
+import { ZIP_VERSION } from "./constants/versions";
 
-import type { ZipEntry } from "../../../src/index.js";
+import type { ZipEntry } from "../../src/index";
+import {
+  decodeBitFlags,
+  encodeBitFlags,
+  type BitFlagOptions,
+} from "./constants/bitflags";
 
 const {
   SIGNATURE: SIGNATURE_OFFSET,
@@ -22,21 +27,25 @@ const {
   DISK_NUMBER_START,
   INTERNAL_ATTRIBUTES,
   EXTERNAL_ATTRIBUTES,
-  LOCAL_HEADER_OFFSET,
+  LOCAL_FILE_HEADER_OFFSET,
   FILE_NAME_START,
-} = CENTRAL_DIRECTORY;
+} = CENTRAL_DIRECTORY_FILE_HEADER;
 
-export class CentralDirectoryHeader<
+export class CentralDirectoryFileHeader<
   BufType extends ArrayBufferLike = ArrayBufferLike,
 > extends DataView<BufType> {
   static readonly SIGNATURE = 0x02014b50;
   static readonly SIZE = 46;
 
-  static create(): CentralDirectoryHeader {
-    const buffer = new ArrayBuffer(CentralDirectoryHeader.SIZE);
+  static create(): CentralDirectoryFileHeader {
+    const buffer = new ArrayBuffer(CentralDirectoryFileHeader.SIZE);
     const view = new DataView(buffer);
-    view.setUint32(SIGNATURE_OFFSET, CentralDirectoryHeader.SIGNATURE, true);
-    return new CentralDirectoryHeader(buffer);
+    view.setUint32(
+      SIGNATURE_OFFSET,
+      CentralDirectoryFileHeader.SIGNATURE,
+      true,
+    );
+    return new CentralDirectoryFileHeader(buffer);
   }
 
   constructor(buffer: BufType, byteOffset: number = 0) {
@@ -61,10 +70,12 @@ export class CentralDirectoryHeader<
     this.setUint16(VERSION_NEEDED, value, true);
   }
 
-  get flags(): number {
-    return this.getUint16(FLAGS, true);
+  get flags(): BitFlagOptions {
+    const value = this.getUint16(FLAGS, true);
+    return decodeBitFlags(value);
   }
-  set flags(value: number) {
+  set flags(flags: Partial<BitFlagOptions>) {
+    const value = encodeBitFlags(flags);
     this.setUint16(FLAGS, value, true);
   }
 
@@ -152,11 +163,11 @@ export class CentralDirectoryHeader<
     this.setUint32(EXTERNAL_ATTRIBUTES, value, true);
   }
 
-  get localHeaderOffset(): number {
-    return this.getUint32(LOCAL_HEADER_OFFSET, true);
+  get localFileHeaderOffset(): number {
+    return this.getUint32(LOCAL_FILE_HEADER_OFFSET, true);
   }
-  set localHeaderOffset(value: number) {
-    this.setUint32(LOCAL_HEADER_OFFSET, value, true);
+  set localFileHeaderOffset(value: number) {
+    this.setUint32(LOCAL_FILE_HEADER_OFFSET, value, true);
   }
 
   get filename(): string {
@@ -241,7 +252,7 @@ export class CentralDirectoryHeader<
 
   override get byteLength(): number {
     return (
-      CentralDirectoryHeader.SIZE +
+      CentralDirectoryFileHeader.SIZE +
       this.filenameLength +
       this.extraFieldLength +
       this.commentLength

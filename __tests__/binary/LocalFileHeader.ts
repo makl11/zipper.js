@@ -1,6 +1,11 @@
-import { LOCAL_FILE_HEADER } from "./constants/offsets.js";
-import { ZIP_VERSION } from "./constants/versions.js";
-import { ExtraField } from "./ExtraField.js";
+import {
+  decodeBitFlags,
+  encodeBitFlags,
+  type BitFlagOptions,
+} from "./constants/bitflags";
+import { LOCAL_FILE_HEADER } from "./constants/offsets";
+import { ZIP_VERSION } from "./constants/versions";
+import { ExtraField } from "./ExtraField/index";
 
 const {
   SIGNATURE: SIGNATURE_OFFSET,
@@ -46,10 +51,12 @@ export class LocalFileHeader<
     this.setUint16(VERSION_NEEDED, value, true);
   }
 
-  get flags(): number {
-    return this.getUint16(FLAGS, true);
+  get flags(): BitFlagOptions {
+    const flags = this.getUint16(FLAGS, true);
+    return decodeBitFlags(flags);
   }
-  set flags(value: number) {
+  set flags(flags: BitFlagOptions) {
+    const value = encodeBitFlags(flags);
     this.setUint16(FLAGS, value, true);
   }
 
@@ -61,7 +68,6 @@ export class LocalFileHeader<
   }
 
   get lastModifiedTime(): number {
-    // LAST_MOD_TIME offset = 10
     return this.getUint16(LAST_MOD_TIME, true);
   }
   set lastModifiedTime(value: number) {
@@ -69,7 +75,6 @@ export class LocalFileHeader<
   }
 
   get lastModifiedDate(): number {
-    // LAST_MOD_DATE offset = 12
     return this.getUint16(LAST_MOD_DATE, true);
   }
   set lastModifiedDate(value: number) {
@@ -122,7 +127,11 @@ export class LocalFileHeader<
 
   set filename(value: string) {
     const bytes = new TextEncoder().encode(value);
-    const view = new Uint8Array(this.buffer, this.byteOffset + FILE_NAME_START);
+    const view = new Uint8Array(
+      this.buffer,
+      this.byteOffset + FILE_NAME_START,
+      bytes.byteLength,
+    );
     view.set(bytes);
     this.filenameLength = bytes.byteLength;
   }
