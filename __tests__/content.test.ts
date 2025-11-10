@@ -186,7 +186,7 @@ describe("File Content", () => {
     });
   });
 
-  describe("ZIP64 Thresholds", { timeout: 120_000, sequential: true }, () => {
+  describe("ZIP64 Thresholds", { timeout: 120_000 }, () => {
     it("should switch to ZIP64 for files larger than 4GB", async () => {
       const zipper = new Zipper();
 

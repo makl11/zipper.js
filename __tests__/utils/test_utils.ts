@@ -1,5 +1,3 @@
-import { open } from "fs/promises";
-
 export async function collectChunks(
   stream: ReadableStream<Uint8Array>,
 ): Promise<Uint8Array[]>;
@@ -39,20 +37,4 @@ export function concatUint8Arrays(arrays: Uint8Array[]): Uint8Array {
   }
 
   return result;
-}
-
-export function createSmallMockFile(size: number = 1): Uint8Array {
-  const data = new Uint8Array(size);
-  for (let i = 0; i < size; i++) {
-    data[i] = i % 256;
-  }
-  return data;
-}
-
-export async function writeChunksToFile(path: string, chunks: Uint8Array[]) {
-  const file = await open(path, "w");
-  for (const chunk of chunks) {
-    await file.write(chunk);
-  }
-  await file.close();
 }
