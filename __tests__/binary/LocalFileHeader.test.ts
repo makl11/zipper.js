@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { FEATURES_VERSION } from "./constants/versions";
 
-import { DIR, FILE } from "../utils/test_data";
+import { DIR, FILE, LARGE_FILE } from "../utils/test_data";
 
 import type { ZipFileStream } from "../../src/index";
 import Zipper from "../../src/index";
@@ -106,8 +106,8 @@ describe("Local File Header", () => {
     const zipper = new Zipper();
 
     const largeFile = {
-      ...FILE,
-      size: 0xffffffff + 0xff,
+      ...LARGE_FILE,
+      data: new Uint8Array(),
     };
 
     const headerBuffer = zipper.generateLocalFileHeader(largeFile);

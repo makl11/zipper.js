@@ -50,9 +50,9 @@ describe("Central Directory File Header", () => {
     const zipper = new Zipper();
 
     const headerBuffer = zipper.generateCentralDirectoryHeader(
-      { ...LARGE_FILE, size: undefined },
+      LARGE_FILE,
       0,
-      0,
+      LARGE_FILE.crc,
     );
     const header = new CentralDirectoryFileHeader(headerBuffer.buffer);
 
